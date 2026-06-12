@@ -460,11 +460,71 @@ New classes: `.dash-headline`, `.chart-wrap`, `.benchmarks`, `.benchmark-row`, `
 
 ---
 
+---
+
+## T7 — Base UI & responsive layout ✅
+
+### What was built
+
+A full design pass bringing all Phase 1 flows up to "public product" standard, with a working responsive nav and confirmed no-breakage at 360px width.
+
+### Nav (mobile hamburger)
+
+`base.html` now includes a hamburger `<button>` (`aria-expanded`, `aria-controls`) that toggles `.nav-menu--open` on `#nav-menu`. At ≤600px the ul is hidden by default and revealed on tap; at >600px the hamburger is hidden and the ul is always visible. The toggle uses 3 lines of inline JS with no external dependency.
+
+**Active state**: `aria-current="page"` applied to the current route via `request.path` checks. Styled with white background highlight.
+
+**Footer**: removed the dead `/factors/` link; replaced with "Emission factors: DESNZ 2024" plain text.
+
+### Design changes (`static/css/main.css`)
+
+Full rewrite of the stylesheet preserving all class names. Key changes:
+
+| Area | Change |
+|---|---|
+| Background | `#f7f8f7` page background (off-white) — cards read as white on it |
+| Cards | `box-shadow: 0 1px 4px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04)` |
+| Border | `#d4dbd6` (slightly greener neutral) |
+| Table headers | Uppercase with letter-spacing; `var(--green-xlight)` background |
+| `h2` in cards | `color: var(--green-dark)`, smaller font-size (1.05rem) |
+| Buttons | `min-height: 44px` for touch targets; `--sm` variant: 36px |
+| Focus rings | Replaced `outline` with `box-shadow: 0 0 0 3px rgba(45,138,78,0.18)` |
+| Auth card | `box-shadow` added; padding reduced on mobile (≤480px) |
+| `input[type=month]` | Added to the global input selector (was missing) |
+
+### Landing page (`hello.html`)
+
+- Fixed broken link: `/accounts/register/` → `{% url 'account_signup' %}`
+- Added feature strip (3 cards: Home energy / Trend chart / Household sharing)
+- Authenticated users see "Go to dashboard" instead of sign-up CTA
+- `hero__cta` uses `flex-wrap: wrap` so buttons reflow at any width
+
+### 360px audit
+
+| Flow | Status |
+|---|---|
+| Landing page | Single-column, all buttons full-width ✅ |
+| Nav (collapsed) | Hamburger toggle, items stack vertically ✅ |
+| Sign in / Register | `auth-card` full-width, 20px padding ✅ |
+| Onboarding / Household | Same auth-card pattern ✅ |
+| Enter data (entry form) | `auto-fill` grid → 1 column at 328px ✅ |
+| Enter data (table) | Horizontal scroll via `.table-scroll` ✅ |
+| Dashboard | Headline uses `clamp()`; benchmark bars at 360px: 6rem+bar+5rem grid ✅ |
+
+### Files changed
+
+```
+templates/base.html           Hamburger nav, ARIA attributes, dead link removed
+templates/hello.html          Fixed URL, added feature strip, auth-aware CTA
+static/css/main.css           Full design pass — all existing class names preserved
+```
+
+---
+
 ## Pending tickets
 
 | Ticket | Status | Notes |
 |---|---|---|
-| T7 — Base UI & responsive layout | Partially done | base.html and main.css exist; full design pass deferred |
 | T8 — Tests & CI | Not started | pytest-django, factory_boy, GitHub Actions |
 
 ---

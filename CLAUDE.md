@@ -95,4 +95,5 @@ HTMX 2.0.4 and Chart.js 4.4.9 are loaded from CDN in `base.html`. Static CSS liv
 - T4 ✅ Hard-coded Home Energy slice (HTMX entry form, inline edit, cadence preference)
 - T5 ✅ Engine: `calculate()` + `recalculate()`, factor pinning, `ValidationError`
 - T6 ✅ Dashboard v0: annualised headline, Chart.js trend line (`spanGaps: false`), benchmark strip
-- T7, T8 pending (UI polish, tests/CI)
+- T7 ✅ Responsive UI: hamburger nav (≤600px), 360px layout verified, design pass, landing page
+- T8 pending (tests/CI)

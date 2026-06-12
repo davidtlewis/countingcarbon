@@ -4,14 +4,39 @@
 
 {% block content %}
 <div class="hero">
+  <div class="hero__icon" aria-hidden="true">🌿</div>
   <h1>CountingCarbon</h1>
   <p class="hero__tagline">
     Track your household carbon footprint over time.<br>
-    See trends. Know what&rsquo;s working.
+    Enter your energy use. See trends. Know what&rsquo;s working.
   </p>
+  {% if user.is_authenticated %}
   <p>
-    <a class="btn btn--primary" href="/accounts/register/">Get started</a>
-    <a class="btn btn--secondary" href="/accounts/login/">Sign in</a>
+    <a class="btn btn--primary" href="/dashboard/">Go to dashboard</a>
   </p>
+  {% else %}
+  <p class="hero__cta">
+    <a class="btn btn--primary" href="{% url 'account_signup' %}">Get started — it&rsquo;s free</a>
+    <a class="btn btn--secondary" href="{% url 'account_login' %}">Sign in</a>
+  </p>
+  {% endif %}
+</div>
+
+<div class="features">
+  <div class="feature">
+    <div class="feature__icon" aria-hidden="true">⚡</div>
+    <h3>Home energy</h3>
+    <p>Log gas, electricity, heating oil, LPG and solar export. Monthly, quarterly, or annual — your choice.</p>
+  </div>
+  <div class="feature">
+    <div class="feature__icon" aria-hidden="true">📈</div>
+    <h3>Trend chart</h3>
+    <p>See your monthly footprint over time. Honest gaps where you have no data — no guessing.</p>
+  </div>
+  <div class="feature">
+    <div class="feature__icon" aria-hidden="true">🏠</div>
+    <h3>Household sharing</h3>
+    <p>Invite housemates to share one footprint. One set of data, everyone can see it.</p>
+  </div>
 </div>
 {% endblock %}

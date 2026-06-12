@@ -50,9 +50,9 @@ Override with `DJANGO_SETTINGS_MODULE` env var. Copy `.env.example` to `.env` fo
 |---|---|
 | `accounts` | Auth (via allauth), Household/Membership/Invitation models, onboarding middleware |
 | `catalogue` | Phase 2 — admin-defined slices, line items, factor sets (empty for now) |
-| `entries` | Phase 2+ — PeriodicEntry, EventEntry, AnnualEstimate models (empty for now) |
-| `engine` | Phase 2+ — formula evaluator, factor resolution, pinning, annualisation (empty for now) |
-| `dashboard` | Phase 2+ — aggregate views and trend chart (empty for now) |
+| `entries` | PeriodicEntry + HouseholdSlicePreference; HTMX-driven data entry for Home Energy slice |
+| `engine` | Pure-function calculation layer: `calculate.py` (pin factors), `annualise.py` (annualise + chart series) |
+| `dashboard` | Annualised footprint, monthly trend chart, benchmark comparison strip |
 
 ### Data ownership model
 
@@ -92,4 +92,7 @@ HTMX 2.0.4 and Chart.js 4.4.9 are loaded from CDN in `base.html`. Static CSS liv
 - T1 ✅ Scaffold (Django 6, uv, settings split, HTMX/Chart.js, Railway config, ruff)
 - T2 ✅ Accounts (allauth, registration, email verify, password reset, account deletion)
 - T3 ✅ Households & invitations
-- T4–T8 pending (hard-coded Home Energy slice, engine, dashboard, UI polish, tests/CI)
+- T4 ✅ Hard-coded Home Energy slice (HTMX entry form, inline edit, cadence preference)
+- T5 ✅ Engine: `calculate()` + `recalculate()`, factor pinning, `ValidationError`
+- T6 ✅ Dashboard v0: annualised headline, Chart.js trend line (`spanGaps: false`), benchmark strip
+- T7, T8 pending (UI polish, tests/CI)

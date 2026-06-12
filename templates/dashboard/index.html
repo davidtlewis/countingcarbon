@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard — CountingCarbon{% endblock %}
+
+{% block content %}
+<h1>Dashboard</h1>
+
+{% if not has_data %}
+
+  <div class="card">
+    <p style="margin: 0">
+      No data yet.
+      <a href="/entries/">Add your first home energy entry</a> to see your carbon footprint here.
+    </p>
+  </div>
+
+{% else %}
+
+  {# ── Headline number ─────────────────────────────────────────────── #}
+  <div class="dash-headline">
+    <div class="dash-headline__number">
+      {{ total_kg|floatformat:0 }}<span class="dash-headline__unit"> kg CO₂e</span>
+    </div>
+    <div class="dash-headline__sub">
+      per year &middot; {{ total_tonnes }} tonnes &middot; {{ members }}-person household
+    </div>
+    <div class="dash-headline__note">Tracking: home energy (Phase 1)</div>
+  </div>
+
+  {# ── Slice breakdown ─────────────────────────────────────────────── #}
+  {% if slices %}
+  <div class="card">
+    <h2>Annualised breakdown</h2>
+    <table class="entry-table">
+      <thead>
+        <tr>
+          <th>Category</th>
+          <th class="num">kg CO₂e / year</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in slices %}
+        <tr>
+          <td>{{ s.label }}</td>
+          <td class="num">{{ s.kg|floatformat:1 }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+  {# ── Trend chart ─────────────────────────────────────────────────── #}
+  <div class="card">
+    <h2>Monthly trend</h2>
+    <div class="chart-wrap">
+      <canvas id="trend-chart"></canvas>
+    </div>
+  </div>
+
+  {# ── Benchmark comparison ─────────────────────────────────────────── #}
+  <div class="card">
+    <h2>How you compare</h2>
+    <p class="text-muted" style="margin-top: 0; font-size: 0.9rem">
+      Reference benchmarks scaled for {{ members }} people (all emissions categories combined).
+      Your figure covers home energy only — expect to be below these benchmarks in Phase 1.
+    </p>
+
+    <div class="benchmarks">
+
+      <div class="benchmark-row benchmark-row--you">
+        <div class="benchmark-row__label"><strong>Your home energy</strong></div>
+        <div class="benchmark-row__bar-wrap">
+          <div class="benchmark-row__bar"
+               style="width: {{ household_bar_pct }}%; background: var(--green-mid);"></div>
+        </div>
+        <div class="benchmark-row__value"><strong>{{ total_kg|floatformat:0 }} kg/yr</strong></div>
+      </div>
+
+      <div class="benchmarks__divider">Whole-household reference benchmarks</div>
+
+      {% for b in benchmarks %}
+      <div class="benchmark-row">
+        <div class="benchmark-row__label">{{ b.label }}</div>
+        <div class="benchmark-row__bar-wrap">
+          <div class="benchmark-row__bar"
+               style="width: {{ b.bar_pct }}%; background: {{ b.color }};"></div>
+        </div>
+        <div class="benchmark-row__value">{{ b.kg_total|floatformat:0 }} kg/yr</div>
+      </div>
+      {% endfor %}
+
+    </div>
+  </div>
+
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+{% if has_data %}
+<script>
+(function () {
+  'use strict';
+  const canvas = document.getElementById('trend-chart');
+  if (!canvas) return;
+
+  fetch('{% url "dashboard:chart_data" %}')
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (!d.labels || d.labels.length === 0) {
+        canvas.parentElement.innerHTML =
+          '<p class="text-muted">No chart data available yet.</p>';
+        return;
+      }
+
+      new Chart(canvas, {
+        type: 'line',
+        data: {
+          labels: d.labels,
+          datasets: [
+            {
+              label: 'Household (kg/month)',
+              data: d.household,
+              borderColor: '#2d8a4e',
+              backgroundColor: 'rgba(45,138,78,0.08)',
+              borderWidth: 2,
+              fill: true,
+              tension: 0.3,
+              pointRadius: 4,
+              pointHoverRadius: 6,
+              spanGaps: false,
+              order: 0,
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            legend: { position: 'top' },
+            tooltip: {
+              callbacks: {
+                label: function(item) {
+                  if (item.parsed.y === null) return item.dataset.label + ': no data';
+                  return item.dataset.label + ': ' + item.parsed.y.toFixed(1) + ' kg';
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: { display: true, text: 'kg CO₂e / month' }
+            }
+          }
+        }
+      });
+    })
+    .catch(function(err) {
+      canvas.parentElement.innerHTML =
+        '<p class="text-muted">Chart failed to load.</p>';
+      console.error('chart_data fetch error:', err);
+    });
+})();
+</script>
+{% endif %}
+{% endblock %}

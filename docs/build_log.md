@@ -371,11 +371,99 @@ engine/calculate.py    CalculationResult, ValidationError, calculate(), recalcul
 
 ---
 
+---
+
+## T6 — Dashboard v0 ✅
+
+### What was built
+
+An annualised carbon footprint dashboard: headline figure, monthly trend chart (Chart.js), and a benchmark comparison strip.
+
+### Engine additions (`engine/annualise.py`)
+
+Pure functions, no database access — unit testable in isolation:
+
+```python
+annualise(result_kg, cadence) -> Decimal
+# monthly ×12, quarterly ×4, annual ×1
+
+annualise_latest(entry_list) -> {slice_key: Decimal}
+# Takes entries ordered newest-first; returns one annualised kg per slice
+
+build_chart_series(entry_list, today=None) -> {"labels": [...], "data": [...]}
+# Month-by-month data from earliest entry to current month.
+# Entries contribute their per-month equivalent (result_kg / period_months).
+# Months with no entry coverage return None (honest gap — Chart.js spanGaps: false).
+```
+
+### Dashboard app
+
+#### `dashboard/views.py`
+
+Two views:
+
+**`index`** — main page
+- Queries all household `PeriodicEntry` rows ordered newest-first
+- Calls `annualise_latest()` to get the most recent annualised figure per slice
+- Builds a proportional benchmark strip (all bars scaled to the largest value)
+- Passes `slices` (list of `{key, label, kg}`), `benchmarks`, `total_kg`, `total_tonnes`, `household_bar_pct` to the template
+
+**`chart_data`** — JSON endpoint
+- Calls `build_chart_series()` on all household entries
+- Returns `{labels: [...], household: [float|null, ...], benchmarks: [{key, label, monthly_kg, color}]}`
+- The `household` array uses `null` for months with no data
+
+#### `dashboard/urls.py`
+
+| URL | View | Name |
+|---|---|---|
+| `/dashboard/` | `index` | `dashboard:index` |
+| `/dashboard/chart-data/` | `chart_data` | `dashboard:chart_data` |
+
+### Benchmarks
+
+Sourced from `fixtures/catalogue_seed.json` (kg CO₂e per person per year, `scale_by_household: true`):
+
+| Benchmark | Per person | 2-person example |
+|---|---|---|
+| UK average | 10,000 kg | 20,000 kg |
+| Global average | 4,700 kg | 9,400 kg |
+| UK CCC 2030 target | 2,500 kg | 5,000 kg |
+| 1.5°C fair share | 2,300 kg | 4,600 kg |
+
+### Chart
+
+Fetched from `/dashboard/chart-data/` via `fetch()`. Chart.js 4.4.9 line chart with:
+- `fill: true`, green background, 2px border
+- `spanGaps: false` — null data points render as gaps (no interpolation)
+- Tooltip shows kg or "no data" for gap months
+- Y-axis: "kg CO₂e / month"
+
+### Templates
+
+```
+templates/dashboard/index.html   Extends base.html
+```
+
+Sections: no-data CTA → headline number → slice breakdown table → trend chart → benchmark bar strip.
+
+### CSS additions (`static/css/main.css`)
+
+New classes: `.dash-headline`, `.chart-wrap`, `.benchmarks`, `.benchmark-row`, `.benchmark-row__bar-wrap`, `.benchmark-row__bar`, `.benchmarks__divider`.
+
+### Acceptance
+
+- Dashboard reflects a new entry immediately after save (server-side rendering, no caching) ✅
+- 3-person household sees benchmarks ×3 (e.g. UK average = 30,000 kg) ✅
+- A skipped month shows as a gap in the chart (`null` in dataset, `spanGaps: false`) ✅
+- `manage.py check` passes ✅, ruff passes ✅
+
+---
+
 ## Pending tickets
 
 | Ticket | Status | Notes |
 |---|---|---|
-| T6 — Dashboard v0 | Not started | Annualised footprint, Chart.js trend line, benchmark strip |
 | T7 — Base UI & responsive layout | Partially done | base.html and main.css exist; full design pass deferred |
 | T8 — Tests & CI | Not started | pytest-django, factory_boy, GitHub Actions |
 

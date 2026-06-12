@@ -253,3 +253,96 @@ input:focus, select:focus, textarea:focus {
 /* HTMX loading indicator */
 .htmx-indicator { display: none; }
 .htmx-request .htmx-indicator { display: inline; }
+
+/* ── Dashboard ──────────────────────────────────────────────────── */
+
+/* Headline number */
+.dash-headline {
+  text-align: center;
+  padding: 2.5rem 1rem 2rem;
+  margin-bottom: 1.5rem;
+}
+.dash-headline__number {
+  font-size: clamp(2.5rem, 8vw, 4rem);
+  font-weight: 700;
+  color: var(--green-dark);
+  line-height: 1.1;
+}
+.dash-headline__unit {
+  font-size: clamp(1.2rem, 4vw, 1.8rem);
+  font-weight: 400;
+}
+.dash-headline__sub {
+  font-size: 1.1rem;
+  color: var(--text-muted);
+  margin-top: 0.4rem;
+}
+.dash-headline__note {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 0.3rem;
+  opacity: 0.7;
+}
+
+/* Chart canvas wrapper */
+.chart-wrap {
+  position: relative;
+  max-height: 340px;
+}
+
+/* Benchmark bar chart */
+.benchmarks {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-top: 1rem;
+}
+.benchmarks__divider {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-muted);
+  padding: 0.4rem 0 0.1rem;
+  border-top: 1px solid var(--border);
+  margin-top: 0.4rem;
+}
+.benchmark-row {
+  display: grid;
+  grid-template-columns: 11rem 1fr 7rem;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.9rem;
+}
+.benchmark-row__label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.benchmark-row__bar-wrap {
+  background: var(--green-light);
+  border-radius: 3px;
+  height: 18px;
+  overflow: hidden;
+}
+.benchmark-row__bar {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+.benchmark-row__value {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.85rem;
+}
+.benchmark-row--you .benchmark-row__bar-wrap {
+  background: #d8f0e0;
+}
+
+@media (max-width: 480px) {
+  .benchmark-row {
+    grid-template-columns: 8rem 1fr 6rem;
+    gap: 0.4rem;
+    font-size: 0.8rem;
+  }
+  .benchmark-row__value { font-size: 0.75rem; }
+}

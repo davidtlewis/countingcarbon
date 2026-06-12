@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Sign in — CountingCarbon{% endblock %}
+
+{% block content %}
+<div class="auth-card">
+  <h1>Sign in</h1>
+
+  <form method="post" action="{% url 'account_login' %}">
+    {% csrf_token %}
+    {% for field in form %}
+    <div class="form-group">
+      {{ field.label_tag }}
+      {{ field }}
+      {% if field.errors %}
+      <ul class="form-errors">
+        {% for error in field.errors %}<li>{{ error }}</li>{% endfor %}
+      </ul>
+      {% endif %}
+    </div>
+    {% endfor %}
+    {% if form.non_field_errors %}
+    <ul class="form-errors">
+      {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+    </ul>
+    {% endif %}
+    <button class="btn btn--primary" type="submit">Sign in</button>
+  </form>
+
+  <p class="auth-links">
+    <a href="{% url 'account_reset_password' %}">Forgot your password?</a>
+    &middot;
+    <a href="{% url 'account_signup' %}">Create an account</a>
+  </p>
+</div>
+{% endblock %}

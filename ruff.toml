@@ -1,0 +1,9 @@
+[lint]
+select = ["E", "F", "W", "I", "UP"]
+ignore = ["E501"]
+
+[lint.per-file-ignores]
+"*/settings/*.py" = ["F401", "F403"]
+
+[format]
+quote-style = "double"

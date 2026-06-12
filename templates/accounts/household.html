@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Household — CountingCarbon{% endblock %}
+
+{% block content %}
+<h1>{{ household.name }}</h1>
+
+<section class="card">
+  <h2>Members</h2>
+  <ul class="member-list">
+    {% for m in members %}
+    <li class="member-list__item">
+      <span class="member-list__email">{{ m.user.email }}</span>
+      <span class="member-list__since">since {{ m.joined_at|date:"N Y" }}</span>
+      {% if m.user == request.user %}<span class="badge">you</span>{% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+
+<section class="card">
+  <h2>Invite someone</h2>
+  <p>Invite a household member by email. They&rsquo;ll receive a link that expires in 7 days.</p>
+  <form method="post" action="{% url 'accounts:household_invite' %}">
+    {% csrf_token %}
+    <div class="form-group form-inline">
+      <label for="id_invite_email" class="sr-only">Email address</label>
+      <input type="email" id="id_invite_email" name="email" placeholder="email@example.com" required>
+      <button class="btn btn--primary" type="submit">Send invite</button>
+    </div>
+  </form>
+
+  {% if pending_invites %}
+  <h3>Pending invitations</h3>
+  <ul class="invite-list">
+    {% for inv in pending_invites %}
+    <li>
+      {{ inv.email }}
+      <span class="text-muted">— sent {{ inv.created_at|date:"j N" }}</span>
+      {% if not inv.is_valid %}<span class="badge badge--warn">expired</span>{% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+</section>
+
+<section class="card card--danger">
+  <h2>Leave household</h2>
+  {% if members|length == 1 %}
+  <p>You are the only member. Leaving will permanently delete this household and all its data.</p>
+  {% else %}
+  <p>Your account will be detached. The household and its carbon data will remain.</p>
+  {% endif %}
+  <a class="btn btn--danger" href="{% url 'accounts:household_leave' %}">Leave household</a>
+</section>
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}Leave household — CountingCarbon{% endblock %}
+
+{% block content %}
+<div class="auth-card">
+  <h1>Leave {{ household.name }}?</h1>
+
+  {% if is_last_member %}
+  <p>You are the only member of this household.</p>
+  <p><strong>Leaving will permanently delete the household and all its carbon data. This cannot be undone.</strong></p>
+  {% else %}
+  <p>Your account will be removed from this household. The household and all its carbon data will remain.</p>
+  {% endif %}
+
+  <form method="post">
+    {% csrf_token %}
+    <button class="btn btn--danger" type="submit">
+      {% if is_last_member %}Delete household &amp; leave{% else %}Leave household{% endif %}
+    </button>
+    <a class="btn btn--secondary" href="{% url 'accounts:household' %}">Cancel</a>
+  </form>
+</div>
+{% endblock %}

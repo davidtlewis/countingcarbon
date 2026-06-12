@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}Set up your household — CountingCarbon{% endblock %}
+
+{% block content %}
+<div class="auth-card">
+  <h1>Set up your household</h1>
+  <p>Give your household a name. You can invite other members from household settings once it&rsquo;s created.</p>
+
+  <form method="post">
+    {% csrf_token %}
+    <div class="form-group">
+      <label for="id_name">Household name</label>
+      <input type="text" id="id_name" name="name" placeholder="e.g. The Lewis household"
+             autofocus maxlength="200" value="{{ request.POST.name|default:'' }}">
+      {% if error %}<p class="form-errors">{{ error }}</p>{% endif %}
+    </div>
+    <button class="btn btn--primary" type="submit">Create household</button>
+  </form>
+</div>
+{% endblock %}

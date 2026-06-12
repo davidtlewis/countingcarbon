@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Delete account — CountingCarbon{% endblock %}
+
+{% block content %}
+<div class="auth-card">
+  <h1>Delete account</h1>
+  <p>This will permanently delete your account (<strong>{{ user.email }}</strong>).</p>
+  {% if is_last_member %}
+  <p class="form-errors"><strong>You are the only member of your household.</strong>
+  Deleting your account will also permanently delete the household and all its carbon data.</p>
+  {% else %}
+  <p>Your household&rsquo;s carbon data will remain — other members will still have access.</p>
+  {% endif %}
+  <p><strong>This cannot be undone.</strong></p>
+
+  <form method="post">
+    {% csrf_token %}
+    <button class="btn btn--danger" type="submit">Yes, delete my account</button>
+    <a class="btn btn--secondary" href="{% url 'accounts:account' %}">Cancel</a>
+  </form>
+</div>
+{% endblock %}

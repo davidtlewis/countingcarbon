@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}Join household — CountingCarbon{% endblock %}
+
+{% block content %}
+<div class="auth-card">
+  <h1>You&rsquo;re invited</h1>
+  <p>
+    You&rsquo;ve been invited to join <strong>{{ invitation.household.name }}</strong>
+    on CountingCarbon.
+  </p>
+  <p>Accepting will add you to this household. You&rsquo;ll share one footprint together.</p>
+
+  <form method="post">
+    {% csrf_token %}
+    <button class="btn btn--primary" type="submit">Accept invitation</button>
+    <a class="btn btn--secondary" href="/">Decline</a>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}CountingCarbon{% endblock %}</title>
+
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'css/main.css' %}">
+
+  <!-- HTMX 2.0.4 -->
+  <script src="https://unpkg.com/htmx.org@2.0.4/dist/htmx.min.js"
+          integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+"
+          crossorigin="anonymous"></script>
+
+  <!-- Chart.js 4.4.9 -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js"
+          crossorigin="anonymous"></script>
+
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+  <header>
+    <nav>
+      <a class="nav-brand" href="/">CountingCarbon</a>
+      {% if user.is_authenticated %}
+      <ul>
+        <li><a href="/dashboard/">Dashboard</a></li>
+        <li><a href="/entries/">Enter data</a></li>
+        <li><a href="{% url 'accounts:household' %}">Household</a></li>
+        <li><a href="{% url 'accounts:account' %}">Account</a></li>
+      </ul>
+      {% else %}
+      <ul>
+        <li><a href="{% url 'account_login' %}">Sign in</a></li>
+        <li><a href="{% url 'account_signup' %}">Register</a></li>
+      </ul>
+      {% endif %}
+    </nav>
+  </header>
+
+  {% if messages %}
+  <div class="messages">
+    {% for message in messages %}
+    <div class="message message--{{ message.tags }}">{{ message }}</div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer>
+    <p>
+      <a href="/privacy/">Privacy policy</a> &middot;
+      Emission factors: <a href="/factors/">sources &amp; methodology</a>
+    </p>
+  </footer>
+
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

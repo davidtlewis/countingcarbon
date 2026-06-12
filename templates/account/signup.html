@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Create account — CountingCarbon{% endblock %}
+
+{% block content %}
+<div class="auth-card">
+  <h1>Create account</h1>
+
+  <form method="post" action="{% url 'account_signup' %}">
+    {% csrf_token %}
+    {% for field in form %}
+    <div class="form-group">
+      {{ field.label_tag }}
+      {{ field }}
+      {% if field.help_text %}<p class="form-hint">{{ field.help_text }}</p>{% endif %}
+      {% if field.errors %}
+      <ul class="form-errors">
+        {% for error in field.errors %}<li>{{ error }}</li>{% endfor %}
+      </ul>
+      {% endif %}
+    </div>
+    {% endfor %}
+    {% if form.non_field_errors %}
+    <ul class="form-errors">
+      {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+    </ul>
+    {% endif %}
+    <button class="btn btn--primary" type="submit">Create account</button>
+  </form>
+
+  <p class="auth-links">Already have an account? <a href="{% url 'account_login' %}">Sign in</a></p>
+  <p class="auth-legal">
+    By registering you agree to our <a href="{% url 'privacy' %}">privacy policy</a>.
+  </p>
+</div>
+{% endblock %}

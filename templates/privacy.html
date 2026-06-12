@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Privacy policy — CountingCarbon{% endblock %}
+
+{% block content %}
+<article class="prose">
+  <h1>Privacy policy</h1>
+  <p><em>Last updated: June 2026. Placeholder — full policy to be completed before public launch.</em></p>
+
+  <h2>Who we are</h2>
+  <p>CountingCarbon is operated by David Lewis, based in the United Kingdom.</p>
+
+  <h2>What data we collect</h2>
+  <ul>
+    <li><strong>Account data:</strong> your email address and hashed password.</li>
+    <li><strong>Household data:</strong> carbon footprint entries you enter, including energy readings, transport logs, and other categories.</li>
+    <li><strong>Usage data:</strong> standard web server logs (IP address, browser, pages visited). Logs are retained for up to 30 days.</li>
+  </ul>
+
+  <h2>Why we collect it</h2>
+  <p>We use your data solely to provide the CountingCarbon service — storing your footprint history and displaying it back to you and your household members.</p>
+  <p>We do not sell your data. We do not use it for advertising.</p>
+
+  <h2>Legal basis (UK GDPR)</h2>
+  <p>Processing is necessary to perform the contract with you (providing the service you signed up for) and, where applicable, based on your consent.</p>
+
+  <h2>Data retention</h2>
+  <p>Your data is kept for as long as your account is active. You may delete your account at any time from the <a href="{% url 'accounts:account' %}">account settings page</a>, which hard-deletes your user record. Household carbon data persists unless you are the last member of the household.</p>
+
+  <h2>Your rights</h2>
+  <p>Under UK GDPR you have the right to access, correct, or erase your personal data. To exercise these rights, email <a href="mailto:privacy@countingcarbon.dtlewis.com">privacy@countingcarbon.dtlewis.com</a>.</p>
+
+  <h2>Cookies</h2>
+  <p>We use a single session cookie to keep you signed in. No third-party tracking cookies.</p>
+
+  <h2>Contact</h2>
+  <p>Questions? Email <a href="mailto:privacy@countingcarbon.dtlewis.com">privacy@countingcarbon.dtlewis.com</a>.</p>
+</article>
+{% endblock %}

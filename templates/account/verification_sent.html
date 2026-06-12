@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block title %}Check your email — CountingCarbon{% endblock %}
+
+{% block content %}
+<div class="auth-card">
+  <h1>Check your email</h1>
+  <p>We&rsquo;ve sent a verification link to your email address. Click the link to activate your account.</p>
+  <p>In development the email appears in the server console.</p>
+  <p><a href="{% url 'account_login' %}">Back to sign in</a></p>
+</div>
+{% endblock %}

@@ -1,0 +1,406 @@
+# CountingCarbon — Phase 1 Build Log
+
+Generated: June 2026. Covers T1–T5 (complete). T6, T7, T8 pending.
+
+---
+
+## T1 — Project scaffold ✅
+
+### What was built
+
+Django 6.0 project initialised with `uv`, deployable to Railway with a working "hello" landing page.
+
+### Stack decisions locked in
+
+| Concern | Choice |
+|---|---|
+| Runtime | Python 3.12 via `uv` |
+| Framework | Django 6.0.6 |
+| Database | PostgreSQL via `DATABASE_URL` (dj-database-url); SQLite fallback for local dev |
+| Static files | whitenoise (CompressedManifestStaticFilesStorage) |
+| Server | Gunicorn (2 workers, 2 threads) |
+| Deploy target | Railway (Nixpacks builder) |
+| Frontend JS | HTMX 2.0.4 + Chart.js 4.4.9, both CDN-pinned in `base.html` |
+| Linting | ruff (lint + format), pre-commit hooks installed |
+
+### Files created
+
+```
+countingcarbon/           Django project package
+  settings/
+    base.py               Shared config — DB via DATABASE_URL, whitenoise, allauth wired in
+    dev.py                DEBUG=True, loads .env, console email backend
+    prod.py               Reads SECRET_KEY/ALLOWED_HOSTS from env, HTTPS headers
+  urls.py
+  wsgi.py                 Defaults to settings.prod
+  asgi.py
+manage.py                 Defaults to settings.dev
+templates/
+  base.html               Master template — HTMX, Chart.js, nav, flash messages, footer
+  hello.html              Landing page (placeholder)
+static/css/main.css       Mobile-first stylesheet (green palette, form/button components)
+Procfile                  web: gunicorn; release: migrate + collectstatic
+railway.toml              Nixpacks, health check on /
+.env.example
+.gitignore
+.pre-commit-config.yaml   ruff lint + format hooks
+ruff.toml                 Rules: E/F/W/I/UP, E501 ignored
+README.md                 Setup steps, project structure, deploy instructions
+```
+
+### Empty apps scaffolded
+
+`accounts`, `catalogue`, `entries`, `engine`, `dashboard` — all added to `INSTALLED_APPS`.
+
+### Acceptance
+
+- `uv run python manage.py runserver` works from fresh clone (documented in README)
+- Landing page returns HTTP 200
+- `manage.py check` passes with no issues
+- ruff passes on all files
+
+---
+
+## T2 — Accounts ✅
+
+### What was built
+
+Email/password registration with mandatory email verification, login, logout, password reset, account deletion, and a UK GDPR placeholder privacy policy. Powered by **django-allauth 65.x**.
+
+### allauth configuration (in `settings/base.py`)
+
+```python
+ACCOUNT_LOGIN_METHODS = {"email"}          # no username
+ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*", "password2*"]
+ACCOUNT_EMAIL_VERIFICATION = "mandatory"   # unverified users cannot log in
+ACCOUNT_UNIQUE_EMAIL = True
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"  # dev only
+```
+
+### URLs
+
+| URL | View |
+|---|---|
+| `/accounts/signup/` | allauth signup |
+| `/accounts/login/` | allauth login |
+| `/accounts/logout/` | allauth logout (confirmation page) |
+| `/accounts/email/` | allauth manage emails |
+| `/accounts/password/reset/` | allauth password reset request |
+| `/accounts/password/reset/key/<key>/` | allauth set new password |
+| `/accounts/confirm-email/<key>/` | allauth email confirmation |
+| `/accounts/account/` | `accounts.views.account_detail` |
+| `/accounts/account/delete/` | `accounts.views.account_delete` |
+| `/privacy/` | Privacy policy (placeholder) |
+
+### Account deletion
+
+`account_delete` view hard-deletes the `User` row. Checks for last-member status (see T3) so the template can display the appropriate warning. On POST: logs out first, then deletes household if sole member, then deletes user.
+
+### Files created
+
+```
+accounts/views.py         account_detail, account_delete
+accounts/urls.py          app_name="accounts"
+templates/account/        allauth template overrides (login, signup, logout,
+                          email_confirm, verification_sent, password_reset*.html)
+templates/accounts/       account.html, account_delete_confirm.html
+templates/privacy.html    UK GDPR placeholder (data collected, retention, rights, cookies)
+```
+
+### Acceptance
+
+- Registration → verification email (printed to console in dev) → verify → login ✅
+- Unverified users blocked from login ✅
+- Password reset round-trip ✅
+- Account deletion removes User row ✅
+
+---
+
+## T3 — Households & invitations ✅
+
+### What was built
+
+The ownership model for all carbon data. One household per user (enforced at DB level), email-based invitations with 7-day expiry, household settings page, leave/delete flows.
+
+### Data model
+
+```
+User ──< HouseholdMembership >── Household
+                                     └──< HouseholdInvitation
+```
+
+#### `Household`
+```python
+name: CharField(200)
+created_at: DateTimeField(auto_now_add)
+member_count: property  # returns memberships.count()
+```
+
+#### `HouseholdMembership`
+```python
+user: OneToOneField(User)      # enforces one household per user
+household: ForeignKey(Household)
+joined_at: DateTimeField(auto_now_add)
+```
+
+OneToOneField means accessing `user.membership` raises `DoesNotExist` (caught as `AttributeError`) if the user has no household — used by the onboarding middleware.
+
+#### `HouseholdInvitation`
+```python
+household: ForeignKey(Household, CASCADE)
+email: EmailField
+token: CharField(64, unique)   # secrets.token_urlsafe(32) auto-generated on save
+invited_by: ForeignKey(User, SET_NULL, null=True)
+created_at: DateTimeField(auto_now_add)
+accepted_at: DateTimeField(null=True)
+
+is_valid: property  # False if accepted or > 7 days old
+accept(user): method  # creates membership, stamps accepted_at
+```
+
+### Onboarding middleware
+
+`accounts.middleware.HouseholdOnboardingMiddleware` — sits after `AuthenticationMiddleware`. If authenticated user has no membership, redirects to `/onboarding/`. Exempt prefixes: `/accounts/`, `/admin/`, `/onboarding/`, `/privacy/`, `/static/`, `/favicon.ico`.
+
+Added to `MIDDLEWARE` in `settings/base.py` after `allauth.account.middleware.AccountMiddleware`.
+
+### Invitation flow (new user)
+
+1. Existing member posts to `/accounts/household/invite/` with an email address
+2. `HouseholdInvitation` created; invite email sent via `accounts.emails.send_invitation_email`
+3. Invitee clicks link → `/accounts/invite/<token>/`
+4. View stores token in `request.session["pending_invite_token"]`
+5. Redirected to `/accounts/signup/` (new account) or `/accounts/login/` (existing)
+6. After login, `allauth.account.signals.user_logged_in` fires → `accounts.signals.accept_pending_invite` pops the session token and calls `invitation.accept(user)`
+
+This covers the full new-user path: signup → email verify → login → household joined, all via session continuity.
+
+### URLs
+
+| URL | View |
+|---|---|
+| `/onboarding/` | `accounts.views.onboarding` (create household) |
+| `/accounts/household/` | `accounts.views.household_settings` |
+| `/accounts/household/invite/` | `accounts.views.household_invite` (POST) |
+| `/accounts/household/leave/` | `accounts.views.household_leave` |
+| `/accounts/invite/<token>/` | `accounts.views.invite_accept` |
+
+### Last-member handling
+
+- Leaving: `household_leave` detects `member_count == 1`; confirmation page warns "this will delete the household and all its data"; POST cascade-deletes the household (which cascades memberships, invitations, and all entries)
+- Account deletion: same check in `account_delete`
+
+### Files created
+
+```
+accounts/models.py        Household, HouseholdMembership, HouseholdInvitation
+accounts/middleware.py    HouseholdOnboardingMiddleware
+accounts/emails.py        send_invitation_email()
+accounts/signals.py       accept_pending_invite (user_logged_in receiver)
+accounts/apps.py          AccountsConfig.ready() connects signals
+templates/accounts/       onboarding.html, household.html, invite_accept.html,
+                          invite_invalid.html, household_leave_confirm.html
+                          (account_delete_confirm.html updated with last-member warning)
+```
+
+### Acceptance
+
+- Two users can share one household via email invite ✅
+- A user cannot belong to two households (OneToOneField constraint) ✅
+- Invitation tokens are single-use and expire after 7 days ✅
+- Last-member leaving/deletion cascades the household and all its data ✅
+
+---
+
+## T4 — Hard-coded Home Energy slice ✅
+
+### What was built
+
+The first data-entry slice: Home Energy, implemented as a hard-coded Python structure in `entries/slices.py`. Periodic entry form with HTMX partial swaps, cadence preference, edit-in-place, duplicate rejection.
+
+### Data model
+
+#### `HouseholdSlicePreference` (in `entries/models.py`)
+```python
+household: ForeignKey(Household, CASCADE)
+slice_key: CharField(100)
+cadence: CharField(choices=[monthly|quarterly|annual], default="monthly")
+# unique_together: (household, slice_key)
+```
+
+#### `PeriodicEntry` (in `entries/models.py`)
+```python
+household: ForeignKey(Household, CASCADE)
+slice_key: CharField(100)
+period_start: DateField          # always 1st of the month/quarter/year
+cadence: CharField(20)
+inputs: JSONField                # raw user inputs {item_key: value_or_null}
+pinned_factors: JSONField        # {item_key: str(factor)} — frozen at entry time
+result_kg: DecimalField(12, 4)
+formula_version: CharField(64)   # sha256 of slice_def at calculation time
+logged_by: ForeignKey(User, SET_NULL, null=True)
+created_at, updated_at: DateTimeField
+
+# unique_together: (household, slice_key, period_start)
+# ordering: ["-period_start"]
+# period_label: property — "June 2026" / "Q2 2026" / "2026"
+# period_end: property — exclusive end date for annualisation
+```
+
+### Slice definition (`entries/slices.py`)
+
+```python
+HOME_ENERGY_SLICE = {
+    "key": "home_energy",
+    "label": "Home Energy",
+    "items": [
+        {"key": "gas_kwh",          "factor": 0.18286, "negative": False, ...},
+        {"key": "elec_kwh",         "factor": 0.20707, "negative": False, ...},
+        {"key": "oil_litres",       "factor": 2.5202,  "negative": False, ...},
+        {"key": "lpg_litres",       "factor": 1.5534,  "negative": False, ...},
+        {"key": "solar_export_kwh", "factor": 0.20707, "negative": True,  ...},
+    ],
+}
+```
+
+All factors sourced from DESNZ 2024. Solar export uses the grid electricity factor as a negative contribution (credit).
+
+### HTMX interaction design
+
+**Add entry** — form `hx-post="/entries/home-energy/add/"` with `hx-target="#entries-section"` `hx-swap="outerHTML"`. Server always returns the full `#entries-section` partial (form + table). Success shows a save-flash banner with the computed kg CO₂e.
+
+**Edit entry** — "Edit" button on each row: `hx-get="…/edit-form/"` `hx-target="#entry-N"` `hx-swap="outerHTML"`. Returns `entry_edit_row.html` (inputs inline in the table row). Save button: `hx-post="…/edit/"` `hx-include="closest tr"` — valid HTML (no `<form>` inside `<tr>`), HTMX serialises inputs from the row. Cancel button: `hx-get="…/row/"` restores the read-only row.
+
+**CSRF** — global `htmx:configRequest` listener in `base.html` forwards the `csrftoken` cookie as the `X-CSRFToken` header on all HTMX requests (required because edit rows cannot use Django's `{% csrf_token %}` form field).
+
+### URLs (`entries/urls.py`, app_name="entries")
+
+| URL | View | Purpose |
+|---|---|---|
+| `/entries/` | redirect | → `/entries/home-energy/` |
+| `/entries/home-energy/` | `home_energy` | Full page |
+| `/entries/home-energy/add/` | `add_entry` | POST, HTMX |
+| `/entries/home-energy/cadence/` | `update_cadence` | POST, redirect |
+| `/entries/home-energy/<id>/row/` | `entry_row` | GET, HTMX (cancel edit) |
+| `/entries/home-energy/<id>/edit-form/` | `edit_entry_form` | GET, HTMX (open edit) |
+| `/entries/home-energy/<id>/edit/` | `edit_entry` | POST, HTMX (save edit) |
+
+### Files created
+
+```
+entries/slices.py                       HOME_ENERGY_SLICE definition + SLICES dict
+entries/models.py                       HouseholdSlicePreference, PeriodicEntry
+entries/views.py                        All entry views
+entries/urls.py
+entries/templatetags/entries_extras.py  dict_get filter (template access to JSONField values)
+templates/entries/home_energy.html      Full page
+templates/entries/partials/
+  entries_section.html                  Add form + past entries table (HTMX target)
+  entry_row.html                        Read-only table row
+  entry_edit_row.html                   Inline edit form row
+```
+
+### Acceptance
+
+- Entering 1000 kWh gas stores `result_kg = 182.8600` with `pinned_factors = {"gas_kwh": "0.18286", ...}` ✅
+- Solar export entry produces negative `result_kg` ✅
+- Editing recomputes from `pinned_factors`, not current constants ✅
+- Duplicate period rejected with "An entry for this period already exists" message ✅
+
+---
+
+## T5 — Engine seed: calculate & pin ✅
+
+### What was built
+
+Pure-function calculation module in `engine/calculate.py`. No database access — the `entries` app handles persistence. Designed as the seam where Phase 2's formula engine replaces the arithmetic without changing the calling code.
+
+### Public API
+
+```python
+from engine.calculate import calculate, recalculate, ValidationError, CalculationResult
+
+# New entry — uses current slice factors
+result = calculate(slice_def, inputs)
+# result.result_kg: Decimal
+# result.pinned_factors: dict {item_key: str(factor)}
+# result.formula_version: str (16-char sha256 hex of slice_def)
+
+# Edit — uses stored pinned_factors, never current constants
+new_result_kg = recalculate(slice_def, inputs, pinned_factors)
+# returns: Decimal
+```
+
+### `calculate()` behaviour
+
+1. Validates all input keys against the slice's declared items — unknown keys raise `ValidationError`
+2. Validates values: must be numeric and non-negative — wrong types or negatives raise `ValidationError`
+3. For each item: `contribution = quantity * factor`; positive items add, negative items (`"negative": True`) subtract
+4. Returns `CalculationResult` with `result_kg` quantised to 4 decimal places, `pinned_factors` dict (all factors from the slice, even items not provided — so the full factor snapshot is always stored), and `formula_version`
+
+### `recalculate()` behaviour
+
+Same input validation as `calculate()`, but uses `pinned_factors[key]` instead of `slice_def[item][factor]`. Falls back to current factor only if a key is somehow missing from pinned (defensive). Returns `Decimal` only — the caller (edit view) keeps the original `pinned_factors` and `formula_version` on the entry record unchanged.
+
+### `formula_version`
+
+`sha256(json.dumps(slice_def, sort_keys=True))[:16]` — changes whenever any factor value or structure in the slice definition changes. This lets Phase 2's recalculation feature detect stale entries.
+
+### `ValidationError`
+
+```python
+class ValidationError(Exception):
+    errors: dict  # {field_key: human_readable_message}
+```
+
+Structured so the form layer can render per-field errors.
+
+### Verified calculations
+
+| Input | Expected | Actual |
+|---|---|---|
+| 1000 kWh gas | 182.8600 kg | 182.8600 kg ✅ |
+| 500 kWh solar export | −103.5350 kg | −103.5350 kg ✅ |
+| 1000 kWh gas + pinned factor 0.18286 (recalculate) | 182.8600 kg | 182.8600 kg ✅ |
+
+### Files created
+
+```
+engine/calculate.py    CalculationResult, ValidationError, calculate(), recalculate()
+```
+
+---
+
+## Pending tickets
+
+| Ticket | Status | Notes |
+|---|---|---|
+| T6 — Dashboard v0 | Not started | Annualised footprint, Chart.js trend line, benchmark strip |
+| T7 — Base UI & responsive layout | Partially done | base.html and main.css exist; full design pass deferred |
+| T8 — Tests & CI | Not started | pytest-django, factory_boy, GitHub Actions |
+
+---
+
+## Running the project
+
+```bash
+# Install dependencies
+uv sync
+
+# Copy environment file and start the server
+cp .env.example .env
+uv run python manage.py migrate
+uv run python manage.py runserver
+```
+
+Browse to http://127.0.0.1:8000/ — register, create a household, navigate to "Enter data".
+
+To verify the engine in isolation:
+```bash
+uv run python -c "
+from engine.calculate import calculate
+from entries.slices import HOME_ENERGY_SLICE
+r = calculate(HOME_ENERGY_SLICE, {'gas_kwh': 1000})
+print(r.result_kg, r.pinned_factors['gas_kwh'])
+"
+```

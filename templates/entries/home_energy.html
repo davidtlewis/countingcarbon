@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}Home Energy — CountingCarbon{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>Home Energy</h1>
+
+  <form class="cadence-form" method="post" action="{% url 'entries:update_cadence' %}">
+    {% csrf_token %}
+    <label for="id_cadence">Entry period:</label>
+    <select id="id_cadence" name="cadence" onchange="this.form.submit()">
+      {% for value, label in cadence_choices %}
+      <option value="{{ value }}"{% if preference.cadence == value %} selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </form>
+</div>
+
+{% include "entries/partials/entries_section.html" %}
+{% endblock %}

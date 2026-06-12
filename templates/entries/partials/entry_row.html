@@ -1,0 +1,16 @@
+{% load entries_extras %}
+<tr id="entry-{{ entry.id }}"{% if saved %} class="entry-row--saved"{% endif %}>
+  <td>{{ entry.period_label }}</td>
+  {% for item in slice.items %}
+  <td class="num">{{ entry.inputs|dict_get:item.key|default:"—" }}</td>
+  {% endfor %}
+  <td class="num {% if entry.result_kg < 0 %}num--negative{% endif %}">
+    {{ entry.result_kg|floatformat:2 }}
+  </td>
+  <td class="entry-actions">
+    <button class="btn btn--sm"
+            hx-get="{% url 'entries:edit_entry_form' entry.id %}"
+            hx-target="#entry-{{ entry.id }}"
+            hx-swap="outerHTML">Edit</button>
+  </td>
+</tr>

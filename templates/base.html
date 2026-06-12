@@ -58,6 +58,14 @@
     </p>
   </footer>
 
+  <script>
+    /* Forward the Django CSRF cookie as a header on every HTMX request */
+    document.body.addEventListener('htmx:configRequest', function(evt) {
+      const m = document.cookie.match(/(?:^|;\s*)csrftoken=([^;]+)/);
+      if (m) evt.detail.headers['X-CSRFToken'] = m[1];
+    });
+  </script>
+
   {% block extra_js %}{% endblock %}
 </body>
 </html>

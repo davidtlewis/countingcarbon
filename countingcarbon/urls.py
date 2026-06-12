@@ -9,6 +9,7 @@ urlpatterns = [
     path("accounts/", include("allauth.urls")),
     path("accounts/", include("accounts.urls")),
     path("onboarding/", onboarding, name="onboarding"),
+    path("entries/", include("entries.urls")),
     path(
         "privacy/", TemplateView.as_view(template_name="privacy.html"), name="privacy"
     ),

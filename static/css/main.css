@@ -187,3 +187,69 @@ input:focus, select:focus, textarea:focus {
   clip: rect(0,0,0,0); white-space: nowrap; border: 0;
 }
 .text-muted { color: var(--text-muted); }
+
+/* ── Entries ──────────────────────────────────────────────────────────── */
+
+.page-header {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+}
+.page-header h1 { margin: 0; }
+.cadence-form { display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; }
+.cadence-form select { width: auto; }
+
+.entry-inputs {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0 1.5rem;
+}
+
+.unit { font-size: 0.8rem; color: var(--text-muted); font-weight: 400; }
+
+/* Table */
+.table-scroll { overflow-x: auto; }
+.entry-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+.entry-table th, .entry-table td {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  white-space: nowrap;
+}
+.entry-table th { font-size: 0.8rem; color: var(--text-muted); background: var(--green-light); }
+.entry-table tbody tr:last-child td { border-bottom: none; }
+.entry-table tbody tr:hover { background: #f8fbf9; }
+.num { text-align: right !important; font-variant-numeric: tabular-nums; }
+.num--negative { color: var(--green-mid); font-weight: 600; }
+.entry-actions { text-align: right !important; }
+.entry-table input[type=number] {
+  width: 7rem; padding: 0.2rem 0.4rem; font-size: 0.85rem;
+}
+
+/* Row states */
+.entry-row--saved td { animation: flash-save 1.5s ease-out; }
+.entry-row--editing td { background: #f0f7f2; }
+.entry-row--errors td { padding-top: 0; }
+
+@keyframes flash-save {
+  0%   { background: #c8f0d0; }
+  100% { background: transparent; }
+}
+
+/* Save flash banner */
+.save-flash {
+  padding: 0.75rem 1rem;
+  background: var(--green-light);
+  border-left: 4px solid var(--green-mid);
+  border-radius: var(--radius);
+  margin-bottom: 1rem;
+}
+
+/* Small button variant */
+.btn--sm { padding: 0.25rem 0.75rem; font-size: 0.85rem; }
+
+/* HTMX loading indicator */
+.htmx-indicator { display: none; }
+.htmx-request .htmx-indicator { display: inline; }

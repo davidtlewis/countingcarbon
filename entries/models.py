@@ -44,7 +44,7 @@ class PeriodicEntry(models.Model):
     inputs = models.JSONField()
     pinned_factors = models.JSONField()
     result_kg = models.DecimalField(max_digits=12, decimal_places=4)
-    formula_version = models.CharField(max_length=64)
+    formula_version = models.CharField(max_length=500)
     logged_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,

@@ -2,6 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(uv run *)"
+    ],
+    "additionalDirectories": [
+      "/tmp"
     ]
   }
 }

@@ -96,4 +96,4 @@ HTMX 2.0.4 and Chart.js 4.4.9 are loaded from CDN in `base.html`. Static CSS liv
 - T5 ✅ Engine: `calculate()` + `recalculate()`, factor pinning, `ValidationError`
 - T6 ✅ Dashboard v0: annualised headline, Chart.js trend line (`spanGaps: false`), benchmark strip
 - T7 ✅ Responsive UI: hamburger nav (≤600px), 360px layout verified, design pass, landing page
-- T8 pending (tests/CI)
+- T8 ✅ Tests & CI: pytest-django, factory_boy, 52 tests, GitHub Actions (lint + tests + coverage)

@@ -15,6 +15,14 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "factory-boy>=3.3",
     "pre-commit>=4.6.0",
+    "pytest>=8.3",
+    "pytest-cov>=6.0",
+    "pytest-django>=4.9",
     "ruff>=0.15.17",
 ]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "countingcarbon.settings.dev"
+addopts = "--tb=short -q"

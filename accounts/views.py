@@ -84,7 +84,7 @@ def household_settings(request):
     try:
         membership = request.user.membership
     except HouseholdMembership.DoesNotExist:
-        return redirect("accounts:onboarding")
+        return redirect("onboarding")
 
     household = membership.household
     members = household.memberships.select_related("user").order_by("joined_at")
@@ -111,7 +111,7 @@ def household_invite(request):
     try:
         membership = request.user.membership
     except HouseholdMembership.DoesNotExist:
-        return redirect("accounts:onboarding")
+        return redirect("onboarding")
 
     household = membership.household
     email = request.POST.get("email", "").strip().lower()
@@ -193,7 +193,7 @@ def household_leave(request):
     try:
         membership = request.user.membership
     except HouseholdMembership.DoesNotExist:
-        return redirect("accounts:onboarding")
+        return redirect("onboarding")
 
     household = membership.household
     is_last = household.member_count == 1

@@ -20,5 +20,5 @@ class HouseholdOnboardingMiddleware:
             request.path.startswith(p) for p in _ONBOARDING_EXEMPT_PREFIXES
         ):
             if not hasattr(request.user, "membership"):
-                return redirect("accounts:onboarding")
+                return redirect("onboarding")
         return self.get_response(request)

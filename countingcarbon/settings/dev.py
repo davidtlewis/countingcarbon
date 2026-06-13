@@ -16,3 +16,6 @@ DEBUG = True
 ALLOWED_HOSTS = ["*"]
 
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
+# Skip email verification in dev — avoids needing to copy links from console
+ACCOUNT_EMAIL_VERIFICATION = "none"

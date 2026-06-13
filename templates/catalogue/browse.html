@@ -48,7 +48,6 @@
   {% endif %}
 
   {% for li in slice.line_items.all %}
-  {% if li.active %}
   {% with formula=li.published_formula %}
   <div class="catalogue-li">
     <h3 class="catalogue-li__title">{{ li.label }} <code class="catalogue-li__key">{{ li.key }}</code></h3>
@@ -56,7 +55,7 @@
     {% if li.input_fields.exists %}
     <div class="catalogue-li__inputs">
       <strong>Inputs:</strong>
-      {% for field in li.input_fields.order_by('display_order') %}
+      {% for field in li.input_fields.all %}
       <span class="catalogue-input-tag">
         <code>{{ field.name }}</code>
         {% if field.unit %}({{ field.unit }}){% endif %}
@@ -80,7 +79,6 @@
     {% endif %}
   </div>
   {% endwith %}
-  {% endif %}
   {% empty %}
   <p class="text-muted">No line items.</p>
   {% endfor %}

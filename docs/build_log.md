@@ -1,6 +1,6 @@
 # CountingCarbon — Build Log
 
-Generated: June 2026. Covers T1–T15 (Phase 1 and Phase 2 complete).
+Generated: June 2026. Covers T1–T17 (Phase 1 and Phase 2 complete, Phase 3 in progress).
 
 ---
 
@@ -959,6 +959,93 @@ entries/migrations/0003_formula_version_max_length.py
 ### Final test count
 
 98 tests pass: 24 engine unit, 20 annualise unit, 8 flow tests, 46 parity tests.
+
+---
+
+## T16 — Annual-estimate entry mode ✅
+
+### What was built
+
+Three new entry slices wired end-to-end, covering all major footprint categories beyond home energy.
+
+**Transport (periodic)** — catalogue-backed periodic entry at `/entries/transport/`. Uses the same `entries_section.html` / `entry_row.html` / `entry_edit_row.html` partials as home energy. The partials were refactored to accept URL names as template context variables (`url_add`, `url_row`, `url_edit_form`, `url_edit`) so the same HTML can serve any periodic slice without duplication.
+
+**Flights (event mode)** — already implemented in T12; wired into the nav in this ticket.
+
+**Food (annual estimate)** — `/entries/food/`. Two modes selectable via a tab bar:
+- *Quick*: choose a diet type (high meat / medium meat / low meat / vegetarian / vegan) and number of people. Builds inputs for a single `diet_*` line item.
+- *Detailed*: enter annual kg per food group (beef/lamb, pork, poultry, fish, dairy, eggs, vegetables, fruit, cereals, legumes, nuts). All 11 line items summed.
+Saves an `AnnualEstimate` record; history table shows the last 5 estimates.
+
+**Purchases & Services (annual estimate)** — `/entries/purchases/`. Single form covering 12 line items: clothing (kg), clothing returns (parcels), smartphones, laptops/tablets, TVs, appliances, furniture (£), garden/DIY (£), restaurant meals, hotel nights, streaming hours/week, general online shopping (£). Saves an `AnnualEstimate`.
+
+### Key design decisions
+
+- **`AnnualEstimate` model** — new model in `entries/models.py`. Stores `slice_key`, `effective_from`, `inputs`, `pinned_factors`, `result_kg`, `formula_version`, `mode` (quick/detailed for food), `logged_by`. Ordered by `-effective_from`, `-created_at`; latest record is the current estimate. Preserves history; no in-place edit.
+- **Generic periodic partials** — URL names passed as context vars rather than hardcoded, enabling transport to reuse the home energy HTMX partials unchanged.
+- **Food mode selection** — tab links use `?mode=quick` / `?mode=detailed` GET params; the mode is also passed as a hidden field in the POST so the HTMX swap returns the correct form variant.
+- **Catalogue calculation for food** — `catalogue_calculate` is called with only the relevant line items in `inputs`; absent items default to zero, so passing a single `diet_medium_meat` key sums correctly without touching the other 15 food line items.
+
+### Files created / modified
+
+```
+entries/models.py                           AnnualEstimate model added
+entries/migrations/0004_annual_estimate.py  Migration
+entries/views.py                            Rewritten: _TRANSPORT_URLS, _HOME_ENERGY_URLS dicts;
+                                            transport_*, food*, purchases* views; generic
+                                            _periodic_add/row/edit_form/edit helpers
+entries/urls.py                             transport, food, purchases URL patterns added
+templates/entries/transport.html            New periodic page (mirrors home_energy.html)
+templates/entries/food.html                 New page with tab-bar include
+templates/entries/purchases.html            New page
+templates/entries/partials/food_section.html       HTMX partial (quick/detailed modes)
+templates/entries/partials/purchases_section.html  HTMX partial
+templates/entries/partials/entries_section.html    url_add context var (was hardcoded)
+templates/entries/partials/entry_row.html          url_edit_form context var
+templates/entries/partials/entry_edit_row.html     url_edit, url_row context vars
+templates/base.html                         Transport, Food, Purchases nav links added
+```
+
+### Dashboard impact
+
+`dashboard/views.py` updated to aggregate all three entry modes:
+- Periodic (home energy, transport) → `annualise_latest(entries)` as before
+- Flights → trailing-12-month `EventEntry` sum
+- Food / Purchases → `AnnualEstimate.objects.filter(...).first().result_kg`
+
+---
+
+## T17 — Dashboard v1: trends & composition ✅
+
+### What was built
+
+Three dashboard improvements: a composition doughnut chart, per-slice trend lines, and removal of all Phase-1 placeholder copy.
+
+**Composition doughnut chart** — new canvas `composition-chart` beside the breakdown table. Data passed via Django's `json_script` tag (XSS-safe, handles Decimal serialisation). Chart.js doughnut with `cutout: '60%'`, colour-coded per slice, tooltip shows kg and %. Side-by-side layout with the breakdown table on screens ≥640px; stacked on mobile.
+
+**Trend chart upgrade** — `chart_data` endpoint now returns `slice_series` when multiple periodic slices exist. Frontend detects this and renders one stacked-area series per slice (each in its slice colour) plus a dashed grey total line on top. Single-slice households keep the existing single-line view unchanged.
+
+**Per-slice chart_data** — `build_chart_series` is called once per periodic slice key, then labels are aligned to the longest series (shorter series padded with `None`). A `total` series is computed by summing non-`None` values per month.
+
+**Copy cleanup** — "Tracking: home energy (Phase 1)" replaced with a dynamic list of tracked category labels. "Your home energy" in the benchmark strip replaced with "Your total". No-data empty state links to the new slices.
+
+### Key design decisions
+
+- `json_script` tag used instead of a custom `safe_json` filter — built-in, handles `Decimal` → string via `DjangoJSONEncoder`, and prevents XSS.
+- Label alignment via a dict (`{label: index}`) rather than date arithmetic — simpler and handles any cadence combination.
+- `slice_series` is `null` (not present) for single-slice households so the JS can fall through to the existing single-line path without branching on slice count.
+
+### Files created / modified
+
+```
+dashboard/views.py          SLICE_COLORS dict; chart_data returns slice_series;
+                            tracked_labels added to index context
+templates/dashboard/index.html   Doughnut canvas + json_script data; per-slice trend JS;
+                                 dynamic tracked labels; "Your total" label
+static/css/main.css         .tab-bar / .tab / .tab--active; .headline-number; p.meta;
+                            .slice-dot; .composition-layout; .chart-wrap--doughnut;
+                            .chart-note
+```
 
 ---
 

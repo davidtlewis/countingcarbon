@@ -97,3 +97,13 @@ HTMX 2.0.4 and Chart.js 4.4.9 are loaded from CDN in `base.html`. Static CSS liv
 - T6 ✅ Dashboard v0: annualised headline, Chart.js trend line (`spanGaps: false`), benchmark strip
 - T7 ✅ Responsive UI: hamburger nav (≤600px), 360px layout verified, design pass, landing page
 - T8 ✅ Tests & CI: pytest-django, factory_boy, 52 tests, GitHub Actions (lint + tests + coverage)
+
+### Phase 2 implementation status
+
+- T9  ✅ `catalogue` app: Slice/LineItem/InputField/Formula/FactorSet/Factor/BandTable models + admin
+- T10 ✅ `engine/dsl.py`: hand-rolled lexer → AST → evaluator; `engine/catalogue_calculate.py`
+- T11 ✅ Data migrations 0002 (home_energy) + 0003 (flights) seeding catalogue records
+- T12 ✅ Entries v2: home-energy HTMX views use catalogue_calculate; Flights event-mode entry (EventEntry model)
+- T13 ✅ Admin UX: monospace Formula textarea, "Validate & run test cases" + "Publish" actions (publish gate), FactorSet JSON import with diff preview, PeriodicEntry/EventEntry read-only audit in admin
+- T14 ✅ `load_catalogue` management command: idempotent upsert from `fixtures/catalogue_seed.json`; `--dry-run` shows diff; adds 3 factor sets, 5 slices, 46 formulas with test cases; CI step seeds before tests
+- T15 ✅ 46 formula parity tests in `tests/test_catalogue_parity.py`; all match reference spreadsheet values (±0.01 kg)

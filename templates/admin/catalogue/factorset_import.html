@@ -1,0 +1,61 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block title %}Import factor set JSON | {{ site_title|default:"Django" }}{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+  <a href="{% url 'admin:index' %}">Home</a>
+  &rsaquo; <a href="{% url 'admin:catalogue_factorset_changelist' %}">Factor sets</a>
+  &rsaquo; Import
+</div>
+{% endblock %}
+
+{% block content %}
+<h1>Import factor set from JSON</h1>
+
+<p>Upload a seed file in the standard catalogue JSON format. Factors are upserted by key;
+   new versions of changed formulas are created and published automatically.</p>
+
+{% if diff_lines %}
+  <h2>Preview — {{ change_count }} change(s)</h2>
+  {% if change_count == 0 %}
+    <p class="help">Nothing to do — the database already matches the file.</p>
+  {% else %}
+    <pre style="background:#f8f8f8;border:1px solid #ddd;padding:1rem;overflow:auto;max-height:400px;">{% for line in diff_lines %}{{ line }}
+{% endfor %}</pre>
+
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <input type="hidden" name="confirmed" value="1">
+      <input type="hidden" name="session_key" value="{{ session_key }}">
+      <p>
+        <button type="submit" class="default" style="margin-right:1rem">
+          Confirm import ({{ change_count }} change{{ change_count|pluralize }})
+        </button>
+        <a href="{% url 'admin:catalogue_factorset_changelist' %}">Cancel</a>
+      </p>
+    </form>
+  {% endif %}
+
+{% elif done %}
+  <p class="success">Import complete — {{ change_count }} change(s) applied.</p>
+  <p><a href="{% url 'admin:catalogue_factorset_changelist' %}">Back to factor sets</a></p>
+
+{% else %}
+  {% if error %}<p class="errornote">{{ error }}</p>{% endif %}
+
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <fieldset class="module aligned">
+      <div class="form-row">
+        <label for="json_file">JSON seed file:</label>
+        <input type="file" name="json_file" id="json_file" accept=".json" required>
+      </div>
+    </fieldset>
+    <p>
+      <button type="submit" class="default">Preview changes</button>
+    </p>
+  </form>
+{% endif %}
+{% endblock %}

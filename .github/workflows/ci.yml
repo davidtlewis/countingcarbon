@@ -28,6 +28,7 @@ jobs:
       DATABASE_URL: postgres://countingcarbon:countingcarbon@localhost:5432/countingcarbon
       SECRET_KEY: ci-secret-key-not-for-production
       DJANGO_SETTINGS_MODULE: countingcarbon.settings.dev
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
     steps:
       - uses: actions/checkout@v4
@@ -47,6 +48,9 @@ jobs:
 
       - name: Run migrations
         run: uv run python manage.py migrate
+
+      - name: Seed catalogue
+        run: uv run python manage.py load_catalogue
 
       - name: Run tests with coverage
         run: uv run pytest --cov=engine --cov=dashboard --cov=entries --cov=accounts --cov-report=term-missing

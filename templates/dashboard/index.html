@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}Dashboard — CountingCarbon{% endblock %}
 
@@ -10,7 +11,9 @@
   <div class="card">
     <p style="margin: 0">
       No data yet.
-      <a href="/entries/">Add your first home energy entry</a> to see your carbon footprint here.
+      <a href="/entries/">Add your first entry</a> — start with
+      <a href="/entries/home-energy/">home energy</a> or
+      <a href="/entries/transport/">transport</a>.
     </p>
   </div>
 
@@ -24,37 +27,58 @@
     <div class="dash-headline__sub">
       per year &middot; {{ total_tonnes }} tonnes &middot; {{ members }}-person household
     </div>
-    <div class="dash-headline__note">Tracking: home energy (Phase 1)</div>
+    {% if tracked_labels %}
+    <div class="dash-headline__note">Tracking: {{ tracked_labels|join:", " }}</div>
+    {% endif %}
   </div>
 
-  {# ── Slice breakdown ─────────────────────────────────────────────── #}
+  {# ── Slice breakdown + composition chart ────────────────────────── #}
   {% if slices %}
-  <div class="card">
-    <h2>Annualised breakdown</h2>
-    <table class="entry-table">
-      <thead>
-        <tr>
-          <th>Category</th>
-          <th class="num">kg CO₂e / year</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for s in slices %}
-        <tr>
-          <td>{{ s.label }}</td>
-          <td class="num">{{ s.kg|floatformat:1 }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+  <div class="card dash-composition">
+    <h2>Annual breakdown by category</h2>
+    <div class="composition-layout">
+
+      <table class="entry-table composition-table">
+        <thead>
+          <tr>
+            <th>Category</th>
+            <th class="num">kg CO₂e / yr</th>
+            <th class="num">%</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in slices %}
+          <tr>
+            <td>
+              <span class="slice-dot" style="background:{{ s.color }}"></span>
+              {{ s.label }}
+            </td>
+            <td class="num">{{ s.kg|floatformat:0 }}</td>
+            <td class="num">
+              {% if total_kg %}
+                {% widthratio s.kg total_kg 100 %}%
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <div class="chart-wrap chart-wrap--doughnut">
+        <canvas id="composition-chart" aria-label="Slice composition doughnut chart"></canvas>
+      </div>
+
+    </div>
   </div>
   {% endif %}
 
   {# ── Trend chart ─────────────────────────────────────────────────── #}
   <div class="card">
     <h2>Monthly trend</h2>
+    <p class="text-muted chart-note">Periodic entries (home energy, transport) shown month by month.
+      Flights, food and purchases are annualised estimates not shown here.</p>
     <div class="chart-wrap">
-      <canvas id="trend-chart"></canvas>
+      <canvas id="trend-chart" aria-label="Monthly CO₂e trend line chart"></canvas>
     </div>
   </div>
 
@@ -62,14 +86,15 @@
   <div class="card">
     <h2>How you compare</h2>
     <p class="text-muted" style="margin-top: 0; font-size: 0.9rem">
-      Reference benchmarks scaled for {{ members }} people (all emissions categories combined).
-      Your figure covers home energy only — expect to be below these benchmarks in Phase 1.
+      Reference benchmarks scaled for {{ members }}
+      {{ members|pluralize:"person,people" }}.
+      {% if tracked_labels %}Tracking: {{ tracked_labels|join:", " }}.{% endif %}
     </p>
 
     <div class="benchmarks">
 
       <div class="benchmark-row benchmark-row--you">
-        <div class="benchmark-row__label"><strong>Your home energy</strong></div>
+        <div class="benchmark-row__label"><strong>Your total</strong></div>
         <div class="benchmark-row__bar-wrap">
           <div class="benchmark-row__bar"
                style="width: {{ household_bar_pct }}%; background: var(--green-mid);"></div>
@@ -98,70 +123,148 @@
 
 {% block extra_js %}
 {% if has_data %}
+{{ slices|json_script:"composition-data" }}
 <script>
 (function () {
   'use strict';
-  const canvas = document.getElementById('trend-chart');
-  if (!canvas) return;
 
-  fetch('{% url "dashboard:chart_data" %}')
-    .then(function(r) { return r.json(); })
-    .then(function(d) {
-      if (!d.labels || d.labels.length === 0) {
-        canvas.parentElement.innerHTML =
-          '<p class="text-muted">No chart data available yet.</p>';
-        return;
-      }
+  // ── Composition doughnut ──────────────────────────────────────────────────
+  (function buildDoughnut() {
+    const canvas = document.getElementById('composition-chart');
+    if (!canvas) return;
 
-      new Chart(canvas, {
-        type: 'line',
-        data: {
-          labels: d.labels,
-          datasets: [
-            {
-              label: 'Household (kg/month)',
-              data: d.household,
-              borderColor: '#2d8a4e',
-              backgroundColor: 'rgba(45,138,78,0.08)',
-              borderWidth: 2,
-              fill: true,
-              tension: 0.3,
-              pointRadius: 4,
-              pointHoverRadius: 6,
-              spanGaps: false,
-              order: 0,
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: true,
-          interaction: { mode: 'index', intersect: false },
-          plugins: {
-            legend: { position: 'top' },
-            tooltip: {
-              callbacks: {
-                label: function(item) {
-                  if (item.parsed.y === null) return item.dataset.label + ': no data';
-                  return item.dataset.label + ': ' + item.parsed.y.toFixed(1) + ' kg';
-                }
+    const slices = JSON.parse(document.getElementById('composition-data').textContent);
+    if (!slices || !slices.length) return;
+
+    new Chart(canvas, {
+      type: 'doughnut',
+      data: {
+        labels: slices.map(function(s) { return s.label; }),
+        datasets: [{
+          data: slices.map(function(s) { return parseFloat(s.kg); }),
+          backgroundColor: slices.map(function(s) { return s.color; }),
+          borderWidth: 2,
+          borderColor: '#fff',
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        cutout: '60%',
+        plugins: {
+          legend: { position: 'bottom', labels: { padding: 12, boxWidth: 14 } },
+          tooltip: {
+            callbacks: {
+              label: function(item) {
+                var val = item.parsed;
+                var total = item.dataset.data.reduce(function(a, b) { return a + b; }, 0);
+                var pct = total ? Math.round(val / total * 100) : 0;
+                return item.label + ': ' + Math.round(val).toLocaleString() + ' kg (' + pct + '%)';
               }
-            }
-          },
-          scales: {
-            y: {
-              beginAtZero: true,
-              title: { display: true, text: 'kg CO₂e / month' }
             }
           }
         }
-      });
-    })
-    .catch(function(err) {
-      canvas.parentElement.innerHTML =
-        '<p class="text-muted">Chart failed to load.</p>';
-      console.error('chart_data fetch error:', err);
+      }
     });
+  })();
+
+  // ── Trend line ────────────────────────────────────────────────────────────
+  (function buildTrend() {
+    const canvas = document.getElementById('trend-chart');
+    if (!canvas) return;
+
+    fetch('{% url "dashboard:chart_data" %}')
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        if (!d.labels || d.labels.length === 0) {
+          canvas.parentElement.innerHTML =
+            '<p class="text-muted">No periodic entries yet — add home energy or transport data to see a trend.</p>';
+          return;
+        }
+
+        const datasets = [];
+
+        if (d.slice_series) {
+          // Multiple periodic slices — show stacked area per slice
+          Object.keys(d.slice_series).forEach(function(sk) {
+            const s = d.slice_series[sk];
+            datasets.push({
+              label: s.label + ' (kg/month)',
+              data: s.data,
+              borderColor: s.color,
+              backgroundColor: s.color + '33',
+              borderWidth: 2,
+              fill: true,
+              tension: 0.3,
+              pointRadius: 3,
+              pointHoverRadius: 5,
+              spanGaps: false,
+            });
+          });
+          // Total line on top
+          datasets.push({
+            label: 'Total (kg/month)',
+            data: d.household,
+            borderColor: '#333',
+            backgroundColor: 'transparent',
+            borderWidth: 2,
+            borderDash: [4, 3],
+            fill: false,
+            tension: 0.3,
+            pointRadius: 3,
+            pointHoverRadius: 5,
+            spanGaps: false,
+          });
+        } else {
+          // Single slice — one line
+          datasets.push({
+            label: 'Household (kg/month)',
+            data: d.household,
+            borderColor: '#2d8a4e',
+            backgroundColor: 'rgba(45,138,78,0.08)',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.3,
+            pointRadius: 4,
+            pointHoverRadius: 6,
+            spanGaps: false,
+          });
+        }
+
+        new Chart(canvas, {
+          type: 'line',
+          data: { labels: d.labels, datasets: datasets },
+          options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+              legend: { position: 'top' },
+              tooltip: {
+                callbacks: {
+                  label: function(item) {
+                    if (item.parsed.y === null) return item.dataset.label + ': no data';
+                    return item.dataset.label + ': ' + item.parsed.y.toFixed(1) + ' kg';
+                  }
+                }
+              }
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                title: { display: true, text: 'kg CO₂e / month' }
+              }
+            }
+          }
+        });
+      })
+      .catch(function(err) {
+        canvas.parentElement.innerHTML =
+          '<p class="text-muted">Chart failed to load.</p>';
+        console.error('chart_data fetch error:', err);
+      });
+  })();
+
 })();
 </script>
 {% endif %}

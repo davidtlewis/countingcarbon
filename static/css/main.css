@@ -284,6 +284,11 @@ input:focus, select:focus, textarea:focus {
 .card--danger { border-color: #e0b8b4; background: #fdf5f4; }
 .card--danger h2 { color: #9b2c2c; }
 
+/* Estimate current-value display inside a card */
+.headline-number { font-size: 1.6rem; font-weight: 700; margin: 0 0 0.25rem; }
+.headline-number .unit { font-size: 0.95rem; font-weight: 400; color: var(--text-muted); }
+p.meta { font-size: 0.82rem; color: var(--text-muted); margin: 0; }
+
 /* ── Auth pages ──────────────────────────────────────────────────────── */
 
 .auth-card {
@@ -381,6 +386,29 @@ input:focus, select:focus, textarea:focus {
 
 .unit { font-size: 0.78rem; color: var(--text-muted); font-weight: 400; }
 
+/* Tab bar (food mode switcher) */
+.tab-bar {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 0;
+}
+.tab {
+  padding: 0.4rem 0.9rem;
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+}
+.tab:hover { color: var(--green-dark); }
+.tab--active {
+  color: var(--green-dark);
+  border-bottom-color: var(--green-mid);
+}
+
 /* Table */
 .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .entry-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
@@ -470,6 +498,40 @@ input:focus, select:focus, textarea:focus {
 .chart-wrap {
   position: relative;
   max-height: 340px;
+}
+.chart-wrap--doughnut {
+  max-height: 260px;
+  max-width: 260px;
+  margin: 0 auto;
+}
+.chart-note {
+  font-size: 0.82rem;
+  margin: -0.5rem 0 0.75rem;
+}
+
+/* Composition layout: table + doughnut side by side on wider screens */
+.composition-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+@media (min-width: 640px) {
+  .composition-layout {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+  .composition-layout .composition-table { flex: 1; }
+  .composition-layout .chart-wrap--doughnut { flex: 0 0 240px; }
+}
+
+/* Slice colour dot in breakdown table */
+.slice-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 0.4rem;
+  vertical-align: middle;
 }
 
 /* Benchmark bar chart */

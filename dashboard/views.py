@@ -44,23 +44,28 @@ SLICE_LABELS = {
     "purchases": "Purchases & Services",
 }
 
+# Colours for per-slice chart series
+SLICE_COLORS = {
+    "home_energy": "#2d8a4e",
+    "transport": "#1a6bb5",
+    "flights": "#e67e22",
+    "food": "#9b59b6",
+    "purchases": "#c0392b",
+}
+
 
 def _get_household(request):
     return request.user.membership.household
 
 
 def _flights_trailing_12m(household) -> Decimal:
-    """Sum of EventEntry result_kg for flights in the trailing 12 months."""
     cutoff = date.today() - timedelta(days=365)
     qs = EventEntry.objects.filter(
         household=household,
         slice_key="flights",
         event_date__gte=cutoff,
     )
-    total = Decimal(0)
-    for entry in qs:
-        total += entry.result_kg
-    return total
+    return sum((e.result_kg for e in qs), Decimal(0))
 
 
 def _latest_annual_estimate(household, slice_key) -> Decimal | None:
@@ -84,16 +89,13 @@ def index(request):
     # Build annualised dict from all sources
     annualised: dict[str, Decimal] = {}
 
-    # Periodic slices (home_energy, transport) via annualise_latest
     if periodic_entries.exists():
         annualised.update(annualise_latest(periodic_entries))
 
-    # Flights: trailing 12-month sum
     flights_kg = _flights_trailing_12m(household)
     if flights_kg:
         annualised["flights"] = flights_kg
 
-    # Annual estimates (food, purchases)
     for slice_key in ("food", "purchases"):
         kg = _latest_annual_estimate(household, slice_key)
         if kg is not None:
@@ -106,15 +108,23 @@ def index(request):
     benchmarks_display = []
     household_bar_pct = 0
     slices_display = []
+    tracked_labels = []
 
     if has_data:
         total_kg = sum(annualised.values(), Decimal("0"))
         total_tonnes = round(float(total_kg) / 1000, 2)
 
         slices_display = [
-            {"key": k, "label": SLICE_LABELS.get(k, k), "kg": v}
+            {
+                "key": k,
+                "label": SLICE_LABELS.get(k, k),
+                "kg": v,
+                "color": SLICE_COLORS.get(k, "#888"),
+            }
             for k, v in annualised.items()
         ]
+
+        tracked_labels = [s["label"] for s in slices_display]
 
         benchmark_kg_values = [b["kg_per_person"] * members for b in BENCHMARKS]
         max_value = max([float(total_kg)] + benchmark_kg_values) or 1
@@ -138,6 +148,7 @@ def index(request):
             "total_kg": total_kg,
             "total_tonnes": total_tonnes,
             "slices": slices_display,
+            "tracked_labels": tracked_labels,
             "benchmarks": benchmarks_display,
             "members": members,
             "household_bar_pct": household_bar_pct,
@@ -151,8 +162,59 @@ def chart_data(request):
     household = _get_household(request)
     members = household.member_count
 
-    entries = PeriodicEntry.objects.filter(household=household)
-    series = build_chart_series(entries)
+    all_periodic = PeriodicEntry.objects.filter(household=household)
+
+    # Determine which periodic slice keys exist
+    periodic_slice_keys = list(
+        all_periodic.values_list("slice_key", flat=True).distinct()
+    )
+
+    if len(periodic_slice_keys) <= 1:
+        # Single slice — return a single household total series
+        series = build_chart_series(all_periodic)
+        slice_series = None
+    else:
+        # Multiple slices — build per-slice series and align labels
+        per_slice = {}
+        all_labels = None
+        for sk in periodic_slice_keys:
+            s = build_chart_series(all_periodic.filter(slice_key=sk))
+            per_slice[sk] = s
+            if all_labels is None or len(s["labels"]) > len(all_labels):
+                all_labels = s["labels"]
+
+        # Align all series to the same label set (pad shorter ones with None)
+        label_index = {lbl: i for i, lbl in enumerate(all_labels)}
+        for sk in periodic_slice_keys:
+            s = per_slice[sk]
+            if s["labels"] == all_labels:
+                continue
+            aligned = [None] * len(all_labels)
+            for lbl, val in zip(s["labels"], s["data"]):
+                if lbl in label_index:
+                    aligned[label_index[lbl]] = val
+            per_slice[sk]["data"] = aligned
+            per_slice[sk]["labels"] = all_labels
+
+        # Compute total series by summing non-None values per month
+        total_data = []
+        for i in range(len(all_labels)):
+            vals = [
+                per_slice[sk]["data"][i]
+                for sk in periodic_slice_keys
+                if per_slice[sk]["data"][i] is not None
+            ]
+            total_data.append(round(sum(vals), 2) if vals else None)
+
+        series = {"labels": all_labels, "data": total_data}
+        slice_series = {
+            sk: {
+                "data": per_slice[sk]["data"],
+                "label": SLICE_LABELS.get(sk, sk),
+                "color": SLICE_COLORS.get(sk, "#888"),
+            }
+            for sk in periodic_slice_keys
+        }
 
     benchmarks_monthly = [
         {
@@ -168,6 +230,7 @@ def chart_data(request):
         {
             "labels": series["labels"],
             "household": series["data"],
+            "slice_series": slice_series,
             "benchmarks": benchmarks_monthly,
         }
     )

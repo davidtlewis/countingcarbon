@@ -1,8 +1,10 @@
 {% load entries_extras %}
 <tr id="entry-{{ entry.id }}"{% if saved %} class="entry-row--saved"{% endif %}>
   <td>{{ entry.period_label }}</td>
-  {% for item in slice.items %}
-  <td class="num">{{ entry.inputs|dict_get:item.key|default:"—" }}</td>
+  {% for li in slice.line_items.all %}
+  {% for field in li.input_fields.all %}
+  <td class="num">{{ entry.inputs|dict_get:li.key|dict_get:field.name|default:"—" }}</td>
+  {% endfor %}
   {% endfor %}
   <td class="num {% if entry.result_kg < 0 %}num--negative{% endif %}">
     {{ entry.result_kg|floatformat:2 }}

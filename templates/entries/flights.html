@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block title %}Flights — CountingCarbon{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>Flights</h1>
+  <p class="page-subtitle">Log each flight as a separate event. Factors include radiative forcing (×1.9). Short-haul threshold: 3,700 km.</p>
+</div>
+
+{% include "entries/partials/flights_section.html" %}
+{% endblock %}

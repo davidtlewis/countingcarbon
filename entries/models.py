@@ -80,3 +80,33 @@ class PeriodicEntry(models.Model):
             m = self.period_start.month + 3
             return date(self.period_start.year + (m > 12), (m - 1) % 12 + 1, 1)
         return date(self.period_start.year + 1, 1, 1)
+
+
+class EventEntry(models.Model):
+    """A dated log entry for event-mode slices (e.g. individual flights)."""
+
+    household = models.ForeignKey(
+        Household,
+        on_delete=models.CASCADE,
+        related_name="event_entries",
+    )
+    slice_key = models.CharField(max_length=100)
+    event_date = models.DateField()
+    inputs = models.JSONField()
+    pinned_factors = models.JSONField()
+    result_kg = models.DecimalField(max_digits=12, decimal_places=4)
+    formula_version = models.CharField(max_length=200)
+    logged_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="logged_event_entries",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-event_date", "-created_at"]
+
+    def __str__(self):
+        return f"{self.household} / {self.slice_key} / {self.event_date}"

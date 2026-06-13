@@ -17,7 +17,7 @@
           hx-indicator="#save-spinner">
       {% csrf_token %}
 
-      {# Period selector — shape depends on cadence #}
+      {# Period selector #}
       {% if preference.cadence == "monthly" %}
       <div class="form-group">
         <label for="id_period_month">Month</label>
@@ -56,24 +56,47 @@
       </div>
       {% endif %}
 
-      {# Item inputs #}
+      {# Line item inputs — one per catalogue line item #}
       <div class="entry-inputs">
-        {% for item in slice.items %}
+        {% for li in slice.line_items.all %}
+        {% for field in li.input_fields.all %}
+        {% with field_key=li.key|add:"__"|add:field.name %}
         <div class="form-group">
-          <label for="id_{{ item.key }}">
-            {{ item.label }}
-            <span class="unit">({{ item.unit }})</span>
-            {% if item.negative %}<span class="badge">credit</span>{% endif %}
+          <label for="id_{{ field_key }}">
+            {{ li.label }}
+            {% if field.unit %}<span class="unit">({{ field.unit }})</span>{% endif %}
+            {% if li.key == "solar_export" %}<span class="badge">credit</span>{% endif %}
           </label>
-          <input type="number" id="id_{{ item.key }}" name="{{ item.key }}"
-                 min="0" step="any" placeholder="0"
-                 value="{{ form_inputs|dict_get:item.key|default:'' }}">
-          {% if form_errors %}
-            {% with err=form_errors|dict_get:item.key %}
-            {% if err %}<p class="form-errors">{{ err }}</p>{% endif %}
-            {% endwith %}
+          {% if field.field_type == "boolean" %}
+          <label class="checkbox-label">
+            <input type="checkbox" id="id_{{ field_key }}" name="{{ field_key }}"
+                   value="1"
+                   {% if form_inputs|dict_get:li.key|dict_get:field.name == "1" %}checked{% endif %}>
+            {{ field.label }}
+          </label>
+          {% elif field.field_type == "choice" %}
+          <select id="id_{{ field_key }}" name="{{ field_key }}">
+            {% for choice in field.choices %}
+            <option value="{{ choice.value }}"
+              {% if form_inputs|dict_get:li.key|dict_get:field.name == choice.value|stringformat:"s" %}selected{% endif %}>
+              {{ choice.label }}
+            </option>
+            {% endfor %}
+          </select>
+          {% else %}
+          <input type="{{ field.field_type|yesno:'number,number,text' }}"
+                 id="id_{{ field_key }}" name="{{ field_key }}"
+                 {% if field.min_value is not None %}min="{{ field.min_value }}"{% else %}min="0"{% endif %}
+                 step="any" placeholder="0"
+                 value="{{ form_inputs|dict_get:li.key|dict_get:field.name|default:'' }}">
           {% endif %}
+          {% with err=form_errors|dict_get:field_key %}
+          {% if err %}<p class="form-errors">{{ err }}</p>{% endif %}
+          {% endwith %}
+          {% if li.help_text %}<p class="help-text">{{ li.help_text }}</p>{% endif %}
         </div>
+        {% endwith %}
+        {% endfor %}
         {% endfor %}
       </div>
 
@@ -93,8 +116,10 @@
         <thead>
           <tr>
             <th>Period</th>
-            {% for item in slice.items %}
-            <th class="num">{{ item.label }}<br><span class="unit">{{ item.unit }}</span></th>
+            {% for li in slice.line_items.all %}
+            <th class="num">{{ li.label }}
+              {% for field in li.input_fields.all %}{% if field.unit %}<br><span class="unit">{{ field.unit }}</span>{% endif %}{% endfor %}
+            </th>
             {% endfor %}
             <th class="num">Total<br><span class="unit">kg CO&#x2082;e</span></th>
             <th></th>

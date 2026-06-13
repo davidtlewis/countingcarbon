@@ -1,0 +1,53 @@
+{% load entries_extras %}
+<tr id="flight-{{ entry.id }}" class="entry-row--editing">
+  <td>{{ entry.event_date }}</td>
+  {% for field in input_fields %}
+  <td>
+    {% if field.field_type == "boolean" %}
+    <input type="checkbox" name="{{ field.name }}" value="1"
+           {% if entry.inputs|dict_get:field.name == "1" %}checked{% endif %}
+           aria-label="{{ field.label }}">
+    {% elif field.field_type == "choice" %}
+    <select name="{{ field.name }}" style="width:8rem">
+      {% for choice in field.choices %}
+      <option value="{{ choice.value }}"
+        {% if entry.inputs|dict_get:field.name == choice.value|stringformat:"s" %}selected{% endif %}>
+        {{ choice.label }}
+      </option>
+      {% endfor %}
+    </select>
+    {% elif field.field_type == "text" %}
+    <input type="text" name="{{ field.name }}"
+           value="{{ entry.inputs|dict_get:field.name|default:'' }}"
+           style="width:7rem" aria-label="{{ field.label }}">
+    {% else %}
+    <input type="number" name="{{ field.name }}"
+           value="{{ entry.inputs|dict_get:field.name|default:'' }}"
+           {% if field.min_value is not None %}min="{{ field.min_value }}"{% endif %}
+           step="any" style="width:6rem" aria-label="{{ field.label }}">
+    {% endif %}
+  </td>
+  {% endfor %}
+  <td class="num">{{ entry.result_kg|floatformat:0 }}</td>
+  <td class="entry-actions">
+    <button class="btn btn--sm btn--primary"
+            hx-post="{% url 'entries:edit_flight' entry.id %}"
+            hx-include="closest tr"
+            hx-target="#flight-{{ entry.id }}"
+            hx-swap="outerHTML">Save</button>
+    <button class="btn btn--sm"
+            hx-get="{% url 'entries:flight_row' entry.id %}"
+            hx-target="#flight-{{ entry.id }}"
+            hx-swap="outerHTML"
+            type="button">Cancel</button>
+  </td>
+</tr>
+{% if form_errors %}
+<tr class="entry-row--errors" id="flight-{{ entry.id }}-errors">
+  <td colspan="9">
+    <ul class="form-errors">
+      {% for key, msg in form_errors.items %}<li>{{ msg }}</li>{% endfor %}
+    </ul>
+  </td>
+</tr>
+{% endif %}

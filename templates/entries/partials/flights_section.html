@@ -1,0 +1,110 @@
+{% load entries_extras %}
+<div id="flights-section">
+
+  {% if saved_entry %}
+  <div class="save-flash">
+    Saved &mdash; {{ saved_entry.inputs.route|default:"Flight" }} on {{ saved_entry.event_date }}: <strong>{{ saved_entry.result_kg|floatformat:0 }} kg CO&#x2082;e</strong>
+  </div>
+  {% endif %}
+
+  {# ── Add flight form ────────────────────────────────────────────────── #}
+  <section class="card">
+    <h2>Log a flight</h2>
+
+    <form hx-post="{% url 'entries:add_flight' %}"
+          hx-target="#flights-section"
+          hx-swap="outerHTML"
+          hx-indicator="#flight-spinner">
+      {% csrf_token %}
+
+      <div class="form-group">
+        <label for="id_event_date">Flight date</label>
+        <input type="date" id="id_event_date" name="event_date"
+               value="{{ form_event_date|date:'Y-m-d'|default:'' }}" required>
+        {% if form_errors.event_date %}<p class="form-errors">{{ form_errors.event_date }}</p>{% endif %}
+      </div>
+
+      <div class="entry-inputs">
+        {% for field in input_fields %}
+        <div class="form-group">
+          <label for="id_{{ field.name }}">
+            {{ field.label }}
+            {% if field.unit %}<span class="unit">({{ field.unit }})</span>{% endif %}
+          </label>
+
+          {% if field.field_type == "boolean" %}
+          <label class="checkbox-label">
+            <input type="checkbox" id="id_{{ field.name }}" name="{{ field.name }}"
+                   value="1"
+                   {% if form_inputs|dict_get:field.name == "1" %}checked{% endif %}>
+            Return trip
+          </label>
+
+          {% elif field.field_type == "choice" %}
+          <select id="id_{{ field.name }}" name="{{ field.name }}">
+            {% for choice in field.choices %}
+            <option value="{{ choice.value }}"
+              {% if form_inputs|dict_get:field.name == choice.value|stringformat:"s" %}selected{% endif %}>
+              {{ choice.label }}
+            </option>
+            {% endfor %}
+          </select>
+
+          {% elif field.field_type == "text" %}
+          <input type="text" id="id_{{ field.name }}" name="{{ field.name }}"
+                 placeholder="e.g. LHR-ATH"
+                 value="{{ form_inputs|dict_get:field.name|default:'' }}">
+
+          {% else %}
+          <input type="number" id="id_{{ field.name }}" name="{{ field.name }}"
+                 {% if field.min_value is not None %}min="{{ field.min_value }}"{% endif %}
+                 step="any" placeholder="0"
+                 value="{{ form_inputs|dict_get:field.name|default:'' }}">
+          {% endif %}
+
+          {% with err=form_errors|dict_get:field.name %}
+          {% if err %}<p class="form-errors">{{ err }}</p>{% endif %}
+          {% endwith %}
+          {% with err=form_errors|dict_get:"flight__"|add:field.name %}
+          {% if err %}<p class="form-errors">{{ err }}</p>{% endif %}
+          {% endwith %}
+        </div>
+        {% endfor %}
+      </div>
+
+      <button class="btn btn--primary" type="submit">
+        Log flight
+        <span id="flight-spinner" class="htmx-indicator"> &#8230;</span>
+      </button>
+    </form>
+  </section>
+
+  {# ── Flight log table ───────────────────────────────────────────────── #}
+  {% if entries %}
+  <section class="card">
+    <h2>Flight log</h2>
+    <div class="table-scroll">
+      <table class="entry-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Route</th>
+            <th class="num">Passengers</th>
+            <th class="num">Distance (km)</th>
+            <th>Return</th>
+            <th>Class</th>
+            <th class="num">kg CO&#x2082;e</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for entry in entries %}
+          {% include "entries/partials/flight_row.html" with entry=entry line_item=line_item input_fields=input_fields %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+  {% endif %}
+
+</div>{# /flights-section #}

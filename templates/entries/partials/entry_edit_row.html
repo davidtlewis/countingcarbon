@@ -1,14 +1,16 @@
 {% load entries_extras %}
 <tr id="entry-{{ entry.id }}" class="entry-row--editing">
   <td>{{ entry.period_label }}</td>
-  {% for item in slice.items %}
+  {% for li in slice.line_items.all %}
+  {% for field in li.input_fields.all %}
   <td class="num">
     <input type="number"
-           name="{{ item.key }}"
-           value="{{ entry.inputs|dict_get:item.key|default:'' }}"
+           name="{{ li.key }}__{{ field.name }}"
+           value="{{ entry.inputs|dict_get:li.key|dict_get:field.name|default:'' }}"
            min="0" step="any" placeholder="0"
-           aria-label="{{ item.label }}">
+           aria-label="{{ li.label }}">
   </td>
+  {% endfor %}
   {% endfor %}
   <td class="num">{{ entry.result_kg|floatformat:2 }}</td>
   <td class="entry-actions">
@@ -26,7 +28,7 @@
 </tr>
 {% if form_errors %}
 <tr class="entry-row--errors" id="entry-{{ entry.id }}-errors">
-  <td colspan="{{ slice.items|length|add:3 }}">
+  <td colspan="{{ slice.line_items.count|add:3 }}">
     <ul class="form-errors">
       {% for key, msg in form_errors.items %}<li>{{ msg }}</li>{% endfor %}
     </ul>

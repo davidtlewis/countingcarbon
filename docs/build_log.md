@@ -1,6 +1,6 @@
 # CountingCarbon — Phase 1 Build Log
 
-Generated: June 2026. Covers T1–T5 (complete). T6, T7, T8 pending.
+Generated: June 2026. Covers T1–T8 (all complete).
 
 ---
 
@@ -521,11 +521,79 @@ static/css/main.css           Full design pass — all existing class names pres
 
 ---
 
-## Pending tickets
+---
 
-| Ticket | Status | Notes |
-|---|---|---|
-| T8 — Tests & CI | Not started | pytest-django, factory_boy, GitHub Actions |
+## T8 — Tests & CI ✅
+
+### What was built
+
+A complete test suite (52 tests) and GitHub Actions CI workflow running on every push and PR.
+
+### Test structure
+
+```
+engine/tests/
+  test_calculate.py   24 tests — calculate() and recalculate(), no DB
+  test_annualise.py   20 tests — annualise(), annualise_latest(), build_chart_series(), no DB
+tests/
+  factories.py        UserFactory, HouseholdFactory, MembershipFactory,
+                      InvitationFactory, SlicePreferenceFactory, PeriodicEntryFactory
+  test_flows.py       8 tests — end-to-end HTTP flows (DB required)
+conftest.py           auth_client fixture (project root)
+```
+
+### Key decisions
+
+**factory_boy password persistence** — `skip_postgeneration_save = True` suppresses the deprecation warning about double-save, but a `@post_generation` hook explicitly calls `obj.save(update_fields=["password"])` to ensure the hashed password reaches the DB. Django session auth hash verification reads from the DB on every request; without this, `force_login` appears to work but sessions are immediately invalidated.
+
+**auth_client fixture** — `force_login` must specify `backend="allauth.account.auth_backends.AuthenticationBackend"` explicitly because allauth's backend is the only one in `AUTHENTICATION_BACKENDS`. The fixture creates a fresh `Client()` per call so tests don't share session state.
+
+**Pure engine tests** — `test_calculate.py` and `test_annualise.py` use no DB at all (`@pytest.mark.django_db` not applied). Duck-typed `_entry()` helper objects stand in for `PeriodicEntry` instances in annualise tests.
+
+### Flow tests (`test_flows.py`)
+
+| Test | Assertion |
+|---|---|
+| `test_gas_entry_appears_annualised_on_dashboard` | 1000 kWh gas → "2194" on dashboard |
+| `test_dashboard_shows_no_data_without_entries` | No entries → "No data" shown |
+| `test_chart_data_endpoint_returns_json` | `/dashboard/chart-data/` returns labels/household/benchmarks |
+| `test_chart_gap_for_skipped_month` | Jan + Mar entered → Feb index is `null` |
+| `test_benchmark_scales_by_member_count` | 2-member household → UK average "20,000" |
+| `test_unauthenticated_redirected_from_entries` | Anonymous → 302 |
+| `test_user_without_household_redirected_to_onboarding` | No household → `/onboarding/` |
+| `test_onboarding_creates_household` | POST `/onboarding/` → `HouseholdMembership` exists |
+
+### GitHub Actions (`.github/workflows/ci.yml`)
+
+Runs on push to `main` and on every PR:
+
+1. `postgres:16` service container (`--health-cmd pg_isready` waits for readiness)
+2. `astral-sh/setup-uv@v4` with caching
+3. `uv sync` — installs all deps including dev group
+4. `ruff check` — lint
+5. `ruff format --check` — format check
+6. `python manage.py migrate` — against Postgres service
+7. `pytest --cov` — full suite with coverage across engine, dashboard, entries, accounts
+
+### Files created
+
+```
+conftest.py                     auth_client fixture
+tests/__init__.py
+tests/factories.py              All model factories
+tests/test_flows.py             End-to-end HTTP tests
+engine/tests/__init__.py
+engine/tests/test_calculate.py  Engine unit tests
+engine/tests/test_annualise.py  Annualisation unit tests
+.github/workflows/ci.yml        GitHub Actions workflow
+```
+
+### Acceptance
+
+- 52 tests pass (`pytest -q`) ✅
+- Pure engine tests require no DB ✅
+- `auth_client` fixture works with allauth's auth backend ✅
+- GitHub Actions workflow: lint + format + migrate + pytest + coverage ✅
 
 ---
 

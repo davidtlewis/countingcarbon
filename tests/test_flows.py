@@ -17,6 +17,8 @@ class TestEntryToDashboard:
 
     1000 kWh gas × factor 0.18286 = 182.86 kg/month
     Annualised (monthly × 12)     = 2194.32 kg/year → displayed as "2194"
+
+    Phase 2: form field names are namespaced as '{line_item_key}__{field_name}'.
     """
 
     def test_gas_entry_appears_annualised_on_dashboard(self, auth_client):
@@ -27,7 +29,7 @@ class TestEntryToDashboard:
 
         response = client.post(
             "/entries/home-energy/add/",
-            {"period_month": "2025-01", "gas_kwh": "1000"},
+            {"period_month": "2025-01", "gas__kwh": "1000"},
         )
         assert response.status_code == 200
 
@@ -55,7 +57,7 @@ class TestEntryToDashboard:
 
         client.post(
             "/entries/home-energy/add/",
-            {"period_month": "2025-01", "gas_kwh": "500"},
+            {"period_month": "2025-01", "gas__kwh": "500"},
         )
 
         response = client.get("/dashboard/chart-data/")
@@ -73,10 +75,10 @@ class TestEntryToDashboard:
 
         # Enter January and March — February is a gap
         client.post(
-            "/entries/home-energy/add/", {"period_month": "2025-01", "gas_kwh": "300"}
+            "/entries/home-energy/add/", {"period_month": "2025-01", "gas__kwh": "300"}
         )
         client.post(
-            "/entries/home-energy/add/", {"period_month": "2025-03", "gas_kwh": "250"}
+            "/entries/home-energy/add/", {"period_month": "2025-03", "gas__kwh": "250"}
         )
 
         response = client.get("/dashboard/chart-data/")
@@ -93,7 +95,7 @@ class TestEntryToDashboard:
         client = auth_client(user1)
 
         client.post(
-            "/entries/home-energy/add/", {"period_month": "2025-01", "gas_kwh": "100"}
+            "/entries/home-energy/add/", {"period_month": "2025-01", "gas__kwh": "100"}
         )
 
         response = client.get("/dashboard/")

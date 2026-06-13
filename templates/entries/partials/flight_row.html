@@ -1,0 +1,21 @@
+{% load entries_extras %}
+<tr id="flight-{{ entry.id }}"{% if saved %} class="entry-row--saved"{% endif %}>
+  <td>{{ entry.event_date }}</td>
+  <td>{{ entry.inputs.route|default:"—" }}</td>
+  <td class="num">{{ entry.inputs.passengers|default:"—" }}</td>
+  <td class="num">{{ entry.inputs.distance_km|default:"—" }}</td>
+  <td>{% if entry.inputs.is_return == "1" %}Yes{% else %}No{% endif %}</td>
+  <td>{% if entry.inputs.cabin_class == "2" %}Business{% else %}Economy{% endif %}</td>
+  <td class="num">{{ entry.result_kg|floatformat:0 }}</td>
+  <td class="entry-actions">
+    <button class="btn btn--sm"
+            hx-get="{% url 'entries:edit_flight_form' entry.id %}"
+            hx-target="#flight-{{ entry.id }}"
+            hx-swap="outerHTML">Edit</button>
+    <button class="btn btn--sm btn--danger"
+            hx-post="{% url 'entries:delete_flight' entry.id %}"
+            hx-target="#flight-{{ entry.id }}"
+            hx-swap="outerHTML"
+            hx-confirm="Delete this flight?">Delete</button>
+  </td>
+</tr>

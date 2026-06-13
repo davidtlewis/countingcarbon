@@ -537,3 +537,9 @@ input:focus, select:focus, textarea:focus {
 @media (max-width: 360px) {
   .benchmark-row { grid-template-columns: 6rem 1fr 5rem; }
 }
+
+/* ── Phase 2 additions ────────────────────────────────────────────────────── */
+.page-subtitle { color: var(--text-muted); margin-top: -0.5rem; margin-bottom: 1rem; }
+.help-text { font-size: 0.82rem; color: var(--text-muted); margin: 0.2rem 0 0; }
+.checkbox-label { display: flex; align-items: center; gap: 0.5rem; font-weight: normal; cursor: pointer; }
+.checkbox-label input[type=checkbox] { width: 1.1rem; height: 1.1rem; }

@@ -1,6 +1,6 @@
 # CountingCarbon — Build Log
 
-Generated: June 2026. Covers T1–T17 (Phase 1 and Phase 2 complete, Phase 3 in progress).
+Generated: June 2026. Covers T1–T19 (Phase 1 and Phase 2 complete, Phase 3 in progress).
 
 ---
 
@@ -1045,6 +1045,100 @@ templates/dashboard/index.html   Doughnut canvas + json_script data; per-slice t
 static/css/main.css         .tab-bar / .tab / .tab--active; .headline-number; p.meta;
                             .slice-dot; .composition-layout; .chart-wrap--doughnut;
                             .chart-note
+```
+
+---
+
+## T18 — Benchmarks & comparison strip ✅
+
+### What was built
+
+Benchmarks moved from hardcoded Python dicts to a `Benchmark` model, seeded from `catalogue_seed.json`, with source citations surfaced in the UI.
+
+**`Benchmark` model** (`catalogue/models.py`) — fields: `key` (unique, idempotency key), `label`, `kg_per_person` (Decimal), `source` (text), `source_url` (URL), `slice_key` (blank = whole-footprint), `display_order`, `active`. Migration `catalogue/0004_benchmark_model.py`.
+
+**`load_catalogue` extended** — `_load_benchmarks()` added. Seeds 9 benchmarks: 4 whole-footprint (UK average 10,000 kg, global average 4,700 kg, CCC 2030 pathway 2,500 kg, 1.5°C fair share 2,300 kg) and 5 per-slice context benchmarks (home energy 2,200 kg, transport 1,900 kg, flights 600 kg, food 2,100 kg, purchases 1,200 kg). All include `source` text and `source_url`.
+
+**Dashboard comparison strip** — reads from DB; member count scaling unchanged (still multiplied at render time). Each benchmark row shows a "source" citation link (dotted underline) or tooltip when no URL exists.
+
+**Per-slice context** — slice breakdown table shows "avg X kg" beneath each slice label, linked to its source, so users can see at a glance how they compare to the UK average for that specific category.
+
+**`BenchmarkAdmin`** — list view with `list_editable` for `display_order` and `active`; `key` read-only.
+
+### Key design decisions
+
+- `slice_key=''` is the convention for whole-footprint benchmarks; per-slice ones carry a non-empty `slice_key`. The dashboard filters by this field.
+- `SLICE_URLS` dict added in `dashboard/views.py` so slice labels can link to the correct entry page (handles `home_energy → /entries/home-energy/` URL transformation).
+- Benchmark bar colours unified to neutral grey — the previous hardcoded colour per benchmark was arbitrary and confusing when benchmarks are now DB-driven.
+
+### Files created / modified
+
+```
+catalogue/models.py                       Benchmark model added
+catalogue/migrations/0004_benchmark_model.py
+catalogue/management/commands/load_catalogue.py  _load_benchmarks() added
+catalogue/admin.py                        BenchmarkAdmin
+dashboard/views.py                        reads Benchmark from DB; SLICE_URLS dict; SLICE_COLORS added
+templates/dashboard/index.html            source citations; slice label links; "Your total" label
+static/css/main.css                       .slice-context, .benchmark-source
+fixtures/catalogue_seed.json             9 benchmarks with source + source_url
+```
+
+---
+
+## T19 — Transparency: "How is this calculated?" ✅
+
+### What was built
+
+Two features: per-entry calculation breakdowns (accessible in ≤2 taps from the dashboard) and a public catalogue browse page.
+
+**Entry breakdown pages** — a shared helper `_build_breakdown_items()` in `entries/views.py` parses the stored `formula_version` string (e.g. `"gas:v1|electricity_import:v2"`), fetches the matching `Formula` records and `Factor` metadata (citation, factor set name, source), and re-evaluates the DSL expression with the pinned inputs and factors to produce a per-line-item arithmetic result. Three login-required views cover all entry types:
+
+| URL | Entry type |
+|---|---|
+| `/entries/breakdown/periodic/<id>/` | `PeriodicEntry` (home energy, transport) |
+| `/entries/breakdown/event/<id>/` | `EventEntry` (flights) |
+| `/entries/breakdown/estimate/<id>/` | `AnnualEstimate` (food, purchases) |
+
+**"Details" links** added to every entry row partial (entry_row.html, flight_row.html) and to the food/purchases estimate history tables.
+
+**Dashboard → entry page** (tap 1): slice labels in the breakdown table now link to the appropriate entry page. **Entry page → breakdown** (tap 2): "Details" button on each row → breakdown page. Total: 2 taps.
+
+The breakdown template (`templates/entries/breakdown.html`) shows:
+1. Period / date / mode summary with total result_kg
+2. Per line item: inputs table, formula expression + version, factor table (key / pinned value / citation + factor set), arithmetic result
+3. DESNZ OGL note with link to the catalogue browse page
+
+**Catalogue browse page** (`/catalogue/`) — public, no login required:
+- Collapsible `<details>` panel per active slice → line items → input fields, published formula expression + version
+- Factor sets section → all factors with key, value, unit, citation
+- DESNZ OGL attribution banner at top
+- `HouseholdOnboardingMiddleware` exempts `/catalogue/`
+- Catalogue nav link visible to authenticated users
+
+### Key design decisions
+
+- `_build_breakdown_items()` handles the flat-input EventEntry case (`flat_inputs=True`) separately from the nested `{li_key: {field: value}}` format used by PeriodicEntry and AnnualEstimate.
+- Factor citations are fetched by matching `key__in=pinned_factors.keys()` and taking the first DB hit per key. This avoids re-resolving by date and works even if the factor set has since been superseded.
+- The catalogue browse page re-uses `li.published_formula()` (the model method) directly in the template — valid because Django templates call zero-argument methods automatically.
+
+### Files created / modified
+
+```
+catalogue/views.py               browse() view
+catalogue/urls.py                NEW — app_name="catalogue"
+templates/catalogue/browse.html  NEW — public catalogue page
+templates/entries/breakdown.html NEW — breakdown page
+entries/views.py                 _build_breakdown_items, breakdown_periodic/event/estimate views
+entries/urls.py                  3 breakdown URL patterns
+accounts/middleware.py           /catalogue/ added to exempt prefixes
+countingcarbon/urls.py           include("catalogue.urls")
+templates/entries/partials/entry_row.html   Details link
+templates/entries/partials/flight_row.html  Details link
+templates/entries/partials/food_section.html      Details link in history table
+templates/entries/partials/purchases_section.html Details link in history table
+templates/dashboard/index.html   Slice labels are now links (tap 1)
+static/css/main.css              breakdown + catalogue styles
 ```
 
 ---

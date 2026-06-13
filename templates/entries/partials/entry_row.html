@@ -11,7 +11,7 @@
   </td>
   <td class="entry-actions">
     <button class="btn btn--sm"
-            hx-get="{% url 'entries:edit_entry_form' entry.id %}"
+            hx-get="{% url url_edit_form entry.id %}"
             hx-target="#entry-{{ entry.id }}"
             hx-swap="outerHTML">Edit</button>
   </td>

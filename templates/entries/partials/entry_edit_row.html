@@ -15,12 +15,12 @@
   <td class="num">{{ entry.result_kg|floatformat:2 }}</td>
   <td class="entry-actions">
     <button class="btn btn--sm btn--primary"
-            hx-post="{% url 'entries:edit_entry' entry.id %}"
+            hx-post="{% url url_edit entry.id %}"
             hx-include="closest tr"
             hx-target="#entry-{{ entry.id }}"
             hx-swap="outerHTML">Save</button>
     <button class="btn btn--sm"
-            hx-get="{% url 'entries:entry_row' entry.id %}"
+            hx-get="{% url url_row entry.id %}"
             hx-target="#entry-{{ entry.id }}"
             hx-swap="outerHTML"
             type="button">Cancel</button>

@@ -18,6 +18,17 @@ urlpatterns = [
         name="edit_entry_form",
     ),
     path("home-energy/<int:entry_id>/edit/", views.edit_entry, name="edit_entry"),
+    # Transport (periodic)
+    path("transport/", views.transport, name="transport"),
+    path("transport/add/", views.transport_add, name="transport_add"),
+    path("transport/cadence/", views.transport_cadence, name="transport_cadence"),
+    path("transport/<int:entry_id>/row/", views.transport_row, name="transport_row"),
+    path(
+        "transport/<int:entry_id>/edit-form/",
+        views.transport_edit_form,
+        name="transport_edit_form",
+    ),
+    path("transport/<int:entry_id>/edit/", views.transport_edit, name="transport_edit"),
     # Flights (event)
     path("flights/", views.flights, name="flights"),
     path("flights/add/", views.add_flight, name="add_flight"),
@@ -29,4 +40,10 @@ urlpatterns = [
     ),
     path("flights/<int:entry_id>/edit/", views.edit_flight, name="edit_flight"),
     path("flights/<int:entry_id>/delete/", views.delete_flight, name="delete_flight"),
+    # Food (annual estimate)
+    path("food/", views.food, name="food"),
+    path("food/save/", views.food_save, name="food_save"),
+    # Purchases (annual estimate)
+    path("purchases/", views.purchases, name="purchases"),
+    path("purchases/save/", views.purchases_save, name="purchases_save"),
 ]

@@ -1,0 +1,113 @@
+{% load entries_extras %}
+<div id="food-section">
+
+  {% if saved %}
+  <div class="save-flash">
+    Saved — your food estimate has been updated.
+  </div>
+  {% endif %}
+
+  {% if current_estimate %}
+  <section class="card">
+    <h2>Current estimate</h2>
+    <p class="headline-number">
+      <strong>{{ current_estimate.result_kg|floatformat:0 }} kg</strong>
+      <span class="unit">CO&#x2082;e / year</span>
+    </p>
+    <p class="meta">As of {{ current_estimate.effective_from }} &middot; {{ current_estimate.mode|default:"—" }} mode</p>
+  </section>
+  {% endif %}
+
+  {# ── Mode tabs ─────────────────────────────────────────────────────────── #}
+  <div class="tab-bar">
+    <a href="?mode=quick" class="tab{% if mode == 'quick' %} tab--active{% endif %}">Quick (diet type)</a>
+    <a href="?mode=detailed" class="tab{% if mode == 'detailed' %} tab--active{% endif %}">Detailed (food groups)</a>
+  </div>
+
+  <section class="card">
+    <h2>{% if mode == 'quick' %}Quick estimate{% else %}Detailed estimate{% endif %}</h2>
+
+    <form hx-post="{% url 'entries:food_save' %}"
+          hx-target="#food-section"
+          hx-swap="outerHTML"
+          hx-indicator="#save-spinner">
+      {% csrf_token %}
+      <input type="hidden" name="mode" value="{{ mode }}">
+
+      <div class="form-group">
+        <label for="id_effective_from">As of date</label>
+        <input type="date" id="id_effective_from" name="effective_from"
+               value="{{ today }}" required>
+      </div>
+
+      {% if mode == 'quick' %}
+      <div class="form-group">
+        <label for="id_diet_type">Diet type</label>
+        <select id="id_diet_type" name="diet_type">
+          {% for key, label in diet_options %}
+          <option value="{{ key }}"
+            {% if form_inputs.diet_type == key %}selected{% endif %}>
+            {{ label }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="id_people">Number of people</label>
+        <input type="number" id="id_people" name="people"
+               min="1" step="1" placeholder="1"
+               value="{{ form_inputs.people|default:'' }}">
+        {% if form_errors.people %}<p class="form-errors">{{ form_errors.people }}</p>{% endif %}
+      </div>
+
+      {% else %}{# detailed #}
+      <p class="help-text">Enter annual consumption per person in your household (kg per year).</p>
+      <div class="entry-inputs">
+        {% for li in detailed_items %}
+        {% with field_key=li.key|add:"__kg" %}
+        <div class="form-group">
+          <label for="id_{{ field_key }}">{{ li.label }} <span class="unit">(kg/year)</span></label>
+          <input type="number" id="id_{{ field_key }}" name="{{ field_key }}"
+                 min="0" step="any" placeholder="0"
+                 value="{{ form_inputs|dict_get:li.key|dict_get:'kg'|default:'' }}">
+          {% with err=form_errors|dict_get:field_key %}
+          {% if err %}<p class="form-errors">{{ err }}</p>{% endif %}
+          {% endwith %}
+        </div>
+        {% endwith %}
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <button class="btn btn--primary" type="submit">
+        Save estimate
+        <span id="save-spinner" class="htmx-indicator"> &#8230;</span>
+      </button>
+    </form>
+  </section>
+
+  {% if history %}
+  <section class="card">
+    <h2>History</h2>
+    <table class="entry-table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Mode</th>
+          <th class="num">kg CO&#x2082;e/year</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for est in history %}
+        <tr>
+          <td>{{ est.effective_from }}</td>
+          <td>{{ est.mode|default:"—" }}</td>
+          <td class="num">{{ est.result_kg|floatformat:0 }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+  {% endif %}
+
+</div>{# /food-section #}

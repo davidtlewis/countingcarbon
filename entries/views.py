@@ -1,6 +1,7 @@
 from datetime import date
 
 from django.contrib.auth.decorators import login_required
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
 from catalogue.models import Slice
@@ -11,8 +12,26 @@ from engine.catalogue_calculate import (
     catalogue_recalculate,
 )
 
-from .models import EventEntry, HouseholdSlicePreference, PeriodicEntry
+from .models import AnnualEstimate, EventEntry, HouseholdSlicePreference, PeriodicEntry
 from .slices import HOME_ENERGY_SLICE
+
+# ── URL name sets for generic periodic partials ───────────────────────────────
+
+_HOME_ENERGY_URLS = {
+    "url_add": "entries:add_entry",
+    "url_row": "entries:entry_row",
+    "url_edit_form": "entries:edit_entry_form",
+    "url_edit": "entries:edit_entry",
+}
+
+_TRANSPORT_URLS = {
+    "url_add": "entries:transport_add",
+    "url_row": "entries:transport_row",
+    "url_edit_form": "entries:transport_edit_form",
+    "url_edit": "entries:transport_edit",
+}
+
+# ── Shared helpers ────────────────────────────────────────────────────────────
 
 
 def _get_household(request):
@@ -45,10 +64,6 @@ def _parse_period_start(cadence: str, post: dict) -> date | None:
 
 
 def _extract_catalogue_inputs(post: dict, line_items) -> dict:
-    """
-    Build nested inputs dict {li_key: {field_name: value}} from POST data.
-    HTML form names are '{li_key}__{field_name}'.
-    """
     inputs = {}
     for li in line_items:
         item_inputs = {}
@@ -56,7 +71,6 @@ def _extract_catalogue_inputs(post: dict, line_items) -> dict:
             key = f"{li.key}__{field.name}"
             val = post.get(key, "").strip()
             if field.field_type == "boolean":
-                # checkboxes are absent from POST when unchecked
                 item_inputs[field.name] = "1" if key in post else "0"
             else:
                 item_inputs[field.name] = val if val else None
@@ -65,11 +79,32 @@ def _extract_catalogue_inputs(post: dict, line_items) -> dict:
 
 
 def _is_phase2_entry(entry: PeriodicEntry) -> bool:
-    """Phase 2 entries store inputs as nested dicts {li_key: {field: value}}."""
     if not entry.inputs:
         return False
     first_val = next(iter(entry.inputs.values()), None)
     return isinstance(first_val, dict)
+
+
+def _get_cadence_choices():
+    return HouseholdSlicePreference._meta.get_field("cadence").choices
+
+
+# ── Generic periodic slice page ───────────────────────────────────────────────
+
+
+def _periodic_page_context(household, slice_key, urls):
+    preference = _get_or_create_preference(household, slice_key)
+    entries = PeriodicEntry.objects.filter(household=household, slice_key=slice_key)
+    slice_obj = Slice.objects.prefetch_related("line_items__input_fields").get(
+        key=slice_key
+    )
+    return {
+        "slice": slice_obj,
+        "entries": entries,
+        "preference": preference,
+        "cadence_choices": _get_cadence_choices(),
+        **urls,
+    }
 
 
 # ── Home Energy (periodic, catalogue-backed) ──────────────────────────────────
@@ -78,53 +113,65 @@ def _is_phase2_entry(entry: PeriodicEntry) -> bool:
 @login_required
 def home_energy(request):
     household = _get_household(request)
-    preference = _get_or_create_preference(household, "home_energy")
-    entries = PeriodicEntry.objects.filter(household=household, slice_key="home_energy")
-    slice_obj = Slice.objects.prefetch_related("line_items__input_fields").get(
-        key="home_energy"
-    )
-    return render(
-        request,
-        "entries/home_energy.html",
-        {
-            "slice": slice_obj,
-            "entries": entries,
-            "preference": preference,
-            "cadence_choices": HouseholdSlicePreference._meta.get_field(
-                "cadence"
-            ).choices,
-        },
-    )
+    ctx = _periodic_page_context(household, "home_energy", _HOME_ENERGY_URLS)
+    return render(request, "entries/home_energy.html", ctx)
 
 
 @login_required
 def update_cadence(request):
+    return _update_cadence(request, "home_energy", "entries:home_energy")
+
+
+def _update_cadence(request, slice_key, redirect_name):
     if request.method != "POST":
-        return redirect("entries:home_energy")
+        return redirect(redirect_name)
     household = _get_household(request)
     new_cadence = request.POST.get("cadence", "monthly")
-    valid = {c[0] for c in HouseholdSlicePreference._meta.get_field("cadence").choices}
+    valid = {c[0] for c in _get_cadence_choices()}
     if new_cadence in valid:
         HouseholdSlicePreference.objects.update_or_create(
             household=household,
-            slice_key="home_energy",
+            slice_key=slice_key,
             defaults={"cadence": new_cadence},
         )
-    return redirect("entries:home_energy")
+    return redirect(redirect_name)
 
 
 @login_required
 def add_entry(request):
+    return _periodic_add(request, "home_energy", _HOME_ENERGY_URLS)
+
+
+@login_required
+def entry_row(request, entry_id):
+    return _periodic_row(request, entry_id, "home_energy", _HOME_ENERGY_URLS)
+
+
+@login_required
+def edit_entry_form(request, entry_id):
+    return _periodic_edit_form(request, entry_id, "home_energy", _HOME_ENERGY_URLS)
+
+
+@login_required
+def edit_entry(request, entry_id):
+    return _periodic_edit(
+        request, entry_id, "home_energy", "entries:home_energy", _HOME_ENERGY_URLS
+    )
+
+
+# ── Generic periodic add/edit handlers ────────────────────────────────────────
+
+
+def _periodic_add(request, slice_key, urls):
     household = _get_household(request)
-    preference = _get_or_create_preference(household, "home_energy")
+    preference = _get_or_create_preference(household, slice_key)
     slice_obj = Slice.objects.prefetch_related("line_items__input_fields").get(
-        key="home_energy"
+        key=slice_key
     )
     line_items = list(
         slice_obj.line_items.filter(active=True).order_by("display_order", "key")
     )
     cadence = preference.cadence
-
     errors = {}
     inputs = {}
     period_start = None
@@ -140,7 +187,7 @@ def add_entry(request):
                 result = catalogue_calculate(slice_obj, inputs, period_start)
                 entry = PeriodicEntry.objects.create(
                     household=household,
-                    slice_key="home_energy",
+                    slice_key=slice_key,
                     period_start=period_start,
                     cadence=cadence,
                     inputs=inputs,
@@ -150,7 +197,7 @@ def add_entry(request):
                     logged_by=request.user,
                 )
                 all_entries = PeriodicEntry.objects.filter(
-                    household=household, slice_key="home_energy"
+                    household=household, slice_key=slice_key
                 )
                 return render(
                     request,
@@ -159,10 +206,9 @@ def add_entry(request):
                         "slice": slice_obj,
                         "entries": all_entries,
                         "preference": preference,
-                        "cadence_choices": HouseholdSlicePreference._meta.get_field(
-                            "cadence"
-                        ).choices,
+                        "cadence_choices": _get_cadence_choices(),
                         "saved_entry": entry,
+                        **urls,
                     },
                 )
             except CatalogueValidationError as exc:
@@ -173,9 +219,7 @@ def add_entry(request):
                     "Use the edit button to update it."
                 )
 
-    all_entries = PeriodicEntry.objects.filter(
-        household=household, slice_key="home_energy"
-    )
+    all_entries = PeriodicEntry.objects.filter(household=household, slice_key=slice_key)
     return render(
         request,
         "entries/partials/entries_section.html",
@@ -183,72 +227,66 @@ def add_entry(request):
             "slice": slice_obj,
             "entries": all_entries,
             "preference": preference,
-            "cadence_choices": HouseholdSlicePreference._meta.get_field(
-                "cadence"
-            ).choices,
+            "cadence_choices": _get_cadence_choices(),
             "form_errors": errors,
             "form_inputs": inputs,
             "form_period_start": period_start,
+            **urls,
         },
     )
 
 
-@login_required
-def entry_row(request, entry_id):
+def _periodic_row(request, entry_id, slice_key, urls):
     household = _get_household(request)
     entry = get_object_or_404(
-        PeriodicEntry, id=entry_id, household=household, slice_key="home_energy"
+        PeriodicEntry, id=entry_id, household=household, slice_key=slice_key
     )
     slice_obj = Slice.objects.prefetch_related("line_items__input_fields").get(
-        key="home_energy"
+        key=slice_key
     )
     return render(
         request,
         "entries/partials/entry_row.html",
-        {"slice": slice_obj, "entry": entry},
+        {"slice": slice_obj, "entry": entry, **urls},
     )
 
 
-@login_required
-def edit_entry_form(request, entry_id):
+def _periodic_edit_form(request, entry_id, slice_key, urls):
     household = _get_household(request)
     entry = get_object_or_404(
-        PeriodicEntry, id=entry_id, household=household, slice_key="home_energy"
+        PeriodicEntry, id=entry_id, household=household, slice_key=slice_key
     )
     slice_obj = Slice.objects.prefetch_related("line_items__input_fields").get(
-        key="home_energy"
+        key=slice_key
     )
     return render(
         request,
         "entries/partials/entry_edit_row.html",
-        {"slice": slice_obj, "entry": entry},
+        {"slice": slice_obj, "entry": entry, **urls},
     )
 
 
-@login_required
-def edit_entry(request, entry_id):
+def _periodic_edit(request, entry_id, slice_key, redirect_name, urls):
     household = _get_household(request)
     entry = get_object_or_404(
-        PeriodicEntry, id=entry_id, household=household, slice_key="home_energy"
+        PeriodicEntry, id=entry_id, household=household, slice_key=slice_key
     )
 
     if request.method != "POST":
-        return redirect("entries:home_energy")
+        return redirect(redirect_name)
 
     slice_obj = Slice.objects.prefetch_related("line_items__input_fields").get(
-        key="home_energy"
+        key=slice_key
     )
     errors = {}
 
     if _is_phase2_entry(entry):
-        # Phase 2 entry: use catalogue recalculate (per-item, sum)
         line_items = list(
             slice_obj.line_items.filter(active=True).order_by("display_order", "key")
         )
         new_inputs = _extract_catalogue_inputs(request.POST, line_items)
         try:
-            # Recalculate using pinned factors and current formula expressions
-            from decimal import Decimal
+            from decimal import ROUND_HALF_UP, Decimal
 
             total = Decimal(0)
             for li in line_items:
@@ -260,8 +298,6 @@ def edit_entry(request, entry_id):
                     li, item_inputs, entry.pinned_factors, formula.expression
                 )
                 total += result
-            from decimal import ROUND_HALF_UP
-
             new_result_kg = total.quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP)
             entry.inputs = new_inputs
             entry.result_kg = new_result_kg
@@ -270,12 +306,11 @@ def edit_entry(request, entry_id):
             return render(
                 request,
                 "entries/partials/entry_row.html",
-                {"slice": slice_obj, "entry": entry, "saved": True},
+                {"slice": slice_obj, "entry": entry, "saved": True, **urls},
             )
         except CatalogueValidationError as exc:
             errors = exc.errors
     else:
-        # Phase 1 entry: use original recalculate() with flat inputs
         old_inputs = {
             item["key"]: request.POST.get(item["key"], "").strip() or None
             for item in HOME_ENERGY_SLICE["items"]
@@ -291,7 +326,7 @@ def edit_entry(request, entry_id):
             return render(
                 request,
                 "entries/partials/entry_row.html",
-                {"slice": slice_obj, "entry": entry, "saved": True},
+                {"slice": slice_obj, "entry": entry, "saved": True, **urls},
             )
         except ValidationError as exc:
             errors = exc.errors
@@ -299,7 +334,44 @@ def edit_entry(request, entry_id):
     return render(
         request,
         "entries/partials/entry_edit_row.html",
-        {"slice": slice_obj, "entry": entry, "form_errors": errors},
+        {"slice": slice_obj, "entry": entry, "form_errors": errors, **urls},
+    )
+
+
+# ── Transport (periodic, catalogue-backed) ────────────────────────────────────
+
+
+@login_required
+def transport(request):
+    household = _get_household(request)
+    ctx = _periodic_page_context(household, "transport", _TRANSPORT_URLS)
+    return render(request, "entries/transport.html", ctx)
+
+
+@login_required
+def transport_cadence(request):
+    return _update_cadence(request, "transport", "entries:transport")
+
+
+@login_required
+def transport_add(request):
+    return _periodic_add(request, "transport", _TRANSPORT_URLS)
+
+
+@login_required
+def transport_row(request, entry_id):
+    return _periodic_row(request, entry_id, "transport", _TRANSPORT_URLS)
+
+
+@login_required
+def transport_edit_form(request, entry_id):
+    return _periodic_edit_form(request, entry_id, "transport", _TRANSPORT_URLS)
+
+
+@login_required
+def transport_edit(request, entry_id):
+    return _periodic_edit(
+        request, entry_id, "transport", "entries:transport", _TRANSPORT_URLS
     )
 
 
@@ -315,7 +387,6 @@ def _get_flight_line_item(slice_obj):
 
 
 def _extract_flight_inputs(post: dict, input_fields) -> dict:
-    """Extract flat {field_name: value} for a single-item event entry."""
     inputs = {}
     for field in input_fields:
         key = field.name
@@ -367,7 +438,6 @@ def add_flight(request):
 
         if not errors:
             try:
-                # catalogue_calculate expects nested {li_key: {field: value}}
                 result = catalogue_calculate(
                     slice_obj, {"flight": form_inputs}, event_date
                 )
@@ -504,7 +574,215 @@ def delete_flight(request, entry_id):
         EventEntry, id=entry_id, household=household, slice_key="flights"
     )
     entry.delete()
-    # Return empty string — HTMX deletes the row via hx-swap="delete"
-    from django.http import HttpResponse
-
     return HttpResponse("")
+
+
+# ── Food (annual estimate) ────────────────────────────────────────────────────
+
+_FOOD_QUICK_KEYS = [
+    "diet_high_meat",
+    "diet_medium_meat",
+    "diet_low_meat",
+    "diet_vegetarian",
+    "diet_vegan",
+]
+
+_FOOD_DETAILED_KEYS = [
+    "beef_lamb",
+    "pork",
+    "poultry",
+    "fish",
+    "dairy",
+    "eggs",
+    "vegetables",
+    "fruit",
+    "cereals",
+    "legumes",
+    "nuts",
+]
+
+_DIET_LABELS = {
+    "high_meat": "High meat (daily)",
+    "medium_meat": "Medium meat (few times/week)",
+    "low_meat": "Low meat / pescatarian",
+    "vegetarian": "Vegetarian",
+    "vegan": "Vegan",
+}
+
+
+def _current_estimate(household, slice_key):
+    return AnnualEstimate.objects.filter(
+        household=household, slice_key=slice_key
+    ).first()
+
+
+def _food_context(
+    household, slice_obj, mode, form_inputs=None, form_errors=None, saved=False
+):
+    current = _current_estimate(household, "food")
+    history = AnnualEstimate.objects.filter(household=household, slice_key="food")[:5]
+    detailed_items = [
+        li
+        for li in slice_obj.line_items.filter(active=True).order_by("display_order")
+        if li.key in _FOOD_DETAILED_KEYS
+    ]
+    return {
+        "slice": slice_obj,
+        "current_estimate": current,
+        "history": history,
+        "mode": mode,
+        "diet_options": list(_DIET_LABELS.items()),
+        "detailed_items": detailed_items,
+        "form_inputs": form_inputs or {},
+        "form_errors": form_errors or {},
+        "saved": saved,
+        "today": date.today().isoformat(),
+    }
+
+
+@login_required
+def food(request):
+    household = _get_household(request)
+    slice_obj = Slice.objects.prefetch_related("line_items__input_fields").get(
+        key="food"
+    )
+    current = _current_estimate(household, "food")
+    mode = request.GET.get("mode", current.mode if current else "quick")
+    ctx = _food_context(household, slice_obj, mode)
+    return render(request, "entries/food.html", ctx)
+
+
+@login_required
+def food_save(request):
+    if request.method != "POST":
+        return redirect("entries:food")
+
+    household = _get_household(request)
+    slice_obj = Slice.objects.prefetch_related("line_items__input_fields").get(
+        key="food"
+    )
+    mode = request.POST.get("mode", "quick")
+    date_str = request.POST.get("effective_from", "").strip()
+    try:
+        effective_from = date.fromisoformat(date_str)
+    except (ValueError, TypeError):
+        effective_from = date.today()
+
+    # Build inputs for the selected mode only; the other mode's items stay zero
+    if mode == "quick":
+        diet_type = request.POST.get("diet_type", "medium_meat")
+        li_key = f"diet_{diet_type}"
+        people = request.POST.get("people", "").strip() or "0"
+        inputs = {li_key: {"people": people}}
+    else:
+        inputs = {}
+        for li_key in _FOOD_DETAILED_KEYS:
+            inputs[li_key] = {
+                "kg": request.POST.get(f"{li_key}__kg", "").strip() or "0"
+            }
+
+    try:
+        result = catalogue_calculate(slice_obj, inputs, effective_from)
+        AnnualEstimate.objects.create(
+            household=household,
+            slice_key="food",
+            effective_from=effective_from,
+            inputs=inputs,
+            pinned_factors=result.pinned_factors,
+            result_kg=result.result_kg,
+            formula_version=result.formula_version,
+            mode=mode,
+            logged_by=request.user,
+        )
+        ctx = _food_context(household, slice_obj, mode, saved=True)
+    except CatalogueValidationError as exc:
+        ctx = _food_context(
+            household,
+            slice_obj,
+            mode,
+            form_inputs=inputs,
+            form_errors=exc.errors,
+        )
+
+    return render(request, "entries/partials/food_section.html", ctx)
+
+
+# ── Purchases (annual estimate) ───────────────────────────────────────────────
+
+
+def _purchases_context(
+    household, slice_obj, form_inputs=None, form_errors=None, saved=False
+):
+    current = _current_estimate(household, "purchases")
+    history = AnnualEstimate.objects.filter(household=household, slice_key="purchases")[
+        :5
+    ]
+    line_items = list(
+        slice_obj.line_items.filter(active=True).order_by("display_order")
+    )
+    return {
+        "slice": slice_obj,
+        "current_estimate": current,
+        "history": history,
+        "line_items": line_items,
+        "form_inputs": form_inputs or {},
+        "form_errors": form_errors or {},
+        "saved": saved,
+        "today": date.today().isoformat(),
+    }
+
+
+@login_required
+def purchases(request):
+    household = _get_household(request)
+    slice_obj = Slice.objects.prefetch_related("line_items__input_fields").get(
+        key="purchases"
+    )
+    ctx = _purchases_context(household, slice_obj)
+    return render(request, "entries/purchases.html", ctx)
+
+
+@login_required
+def purchases_save(request):
+    if request.method != "POST":
+        return redirect("entries:purchases")
+
+    household = _get_household(request)
+    slice_obj = Slice.objects.prefetch_related("line_items__input_fields").get(
+        key="purchases"
+    )
+    date_str = request.POST.get("effective_from", "").strip()
+    try:
+        effective_from = date.fromisoformat(date_str)
+    except (ValueError, TypeError):
+        effective_from = date.today()
+
+    line_items = list(
+        slice_obj.line_items.filter(active=True).order_by("display_order")
+    )
+    inputs = {}
+    for li in line_items:
+        for field in li.input_fields.all():
+            val = request.POST.get(f"{li.key}__{field.name}", "").strip() or "0"
+            inputs.setdefault(li.key, {})[field.name] = val
+
+    try:
+        result = catalogue_calculate(slice_obj, inputs, effective_from)
+        AnnualEstimate.objects.create(
+            household=household,
+            slice_key="purchases",
+            effective_from=effective_from,
+            inputs=inputs,
+            pinned_factors=result.pinned_factors,
+            result_kg=result.result_kg,
+            formula_version=result.formula_version,
+            mode="",
+            logged_by=request.user,
+        )
+        ctx = _purchases_context(household, slice_obj, saved=True)
+    except CatalogueValidationError as exc:
+        ctx = _purchases_context(
+            household, slice_obj, form_inputs=inputs, form_errors=exc.errors
+        )
+
+    return render(request, "entries/partials/purchases_section.html", ctx)

@@ -82,6 +82,41 @@ class PeriodicEntry(models.Model):
         return date(self.period_start.year + 1, 1, 1)
 
 
+class AnnualEstimate(models.Model):
+    """
+    A point-in-time annual carbon estimate for annual_estimate-mode slices
+    (Food, Purchases). Creating a new record preserves history; the latest
+    effective_from record is the current estimate for the dashboard.
+    """
+
+    household = models.ForeignKey(
+        Household,
+        on_delete=models.CASCADE,
+        related_name="annual_estimates",
+    )
+    slice_key = models.CharField(max_length=100)
+    effective_from = models.DateField()
+    inputs = models.JSONField()
+    pinned_factors = models.JSONField()
+    result_kg = models.DecimalField(max_digits=12, decimal_places=4)
+    formula_version = models.CharField(max_length=500)
+    mode = models.CharField(max_length=20, blank=True)  # 'quick'/'detailed' for food
+    logged_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="logged_estimates",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-effective_from", "-created_at"]
+
+    def __str__(self):
+        return f"{self.household} / {self.slice_key} / {self.effective_from}"
+
+
 class EventEntry(models.Model):
     """A dated log entry for event-mode slices (e.g. individual flights)."""
 

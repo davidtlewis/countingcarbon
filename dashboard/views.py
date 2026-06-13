@@ -1,3 +1,4 @@
+from datetime import date, timedelta
 from decimal import Decimal
 
 from django.contrib.auth.decorators import login_required
@@ -5,7 +6,7 @@ from django.http import JsonResponse
 from django.shortcuts import render
 
 from engine.annualise import annualise_latest, build_chart_series
-from entries.models import PeriodicEntry
+from entries.models import AnnualEstimate, EventEntry, PeriodicEntry
 
 # kg CO₂e per person per year — sourced from fixtures/catalogue_seed.json
 BENCHMARKS = [
@@ -37,6 +38,10 @@ BENCHMARKS = [
 
 SLICE_LABELS = {
     "home_energy": "Home Energy",
+    "transport": "Transport",
+    "flights": "Flights",
+    "food": "Food",
+    "purchases": "Purchases & Services",
 }
 
 
@@ -44,25 +49,65 @@ def _get_household(request):
     return request.user.membership.household
 
 
+def _flights_trailing_12m(household) -> Decimal:
+    """Sum of EventEntry result_kg for flights in the trailing 12 months."""
+    cutoff = date.today() - timedelta(days=365)
+    qs = EventEntry.objects.filter(
+        household=household,
+        slice_key="flights",
+        event_date__gte=cutoff,
+    )
+    total = Decimal(0)
+    for entry in qs:
+        total += entry.result_kg
+    return total
+
+
+def _latest_annual_estimate(household, slice_key) -> Decimal | None:
+    est = (
+        AnnualEstimate.objects.filter(household=household, slice_key=slice_key)
+        .only("result_kg")
+        .first()
+    )
+    return est.result_kg if est else None
+
+
 @login_required
 def index(request):
     household = _get_household(request)
     members = household.member_count
 
-    entries = PeriodicEntry.objects.filter(household=household).order_by(
+    periodic_entries = PeriodicEntry.objects.filter(household=household).order_by(
         "-period_start"
     )
-    has_data = entries.exists()
+
+    # Build annualised dict from all sources
+    annualised: dict[str, Decimal] = {}
+
+    # Periodic slices (home_energy, transport) via annualise_latest
+    if periodic_entries.exists():
+        annualised.update(annualise_latest(periodic_entries))
+
+    # Flights: trailing 12-month sum
+    flights_kg = _flights_trailing_12m(household)
+    if flights_kg:
+        annualised["flights"] = flights_kg
+
+    # Annual estimates (food, purchases)
+    for slice_key in ("food", "purchases"):
+        kg = _latest_annual_estimate(household, slice_key)
+        if kg is not None:
+            annualised[slice_key] = kg
+
+    has_data = bool(annualised)
 
     total_kg = None
     total_tonnes = None
-    annualised = {}
     benchmarks_display = []
     household_bar_pct = 0
-
     slices_display = []
+
     if has_data:
-        annualised = annualise_latest(entries)
         total_kg = sum(annualised.values(), Decimal("0"))
         total_tonnes = round(float(total_kg) / 1000, 2)
 

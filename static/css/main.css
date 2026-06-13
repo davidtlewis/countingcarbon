@@ -534,6 +534,29 @@ p.meta { font-size: 0.82rem; color: var(--text-muted); margin: 0; }
   vertical-align: middle;
 }
 
+/* Per-slice average context shown next to the slice label */
+.slice-context {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  padding-left: 18px;
+  margin-top: 1px;
+}
+.slice-context a {
+  color: var(--text-muted);
+}
+
+/* Benchmark source citation link/tag */
+.benchmark-source {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-decoration: none;
+  border-bottom: 1px dotted var(--text-muted);
+  margin-left: 0.4rem;
+  cursor: help;
+}
+a.benchmark-source:hover { color: var(--green-dark); }
+
 /* Benchmark bar chart */
 .benchmarks {
   display: flex;

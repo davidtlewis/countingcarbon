@@ -5,36 +5,9 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.shortcuts import render
 
+from catalogue.models import Benchmark
 from engine.annualise import annualise_latest, build_chart_series
 from entries.models import AnnualEstimate, EventEntry, PeriodicEntry
-
-# kg CO₂e per person per year — sourced from fixtures/catalogue_seed.json
-BENCHMARKS = [
-    {
-        "key": "uk_average",
-        "label": "UK average",
-        "kg_per_person": 10_000,
-        "color": "#e74c3c",
-    },
-    {
-        "key": "global_average",
-        "label": "Global average",
-        "kg_per_person": 4_700,
-        "color": "#e67e22",
-    },
-    {
-        "key": "ccc_2030",
-        "label": "UK CCC 2030 target",
-        "kg_per_person": 2_500,
-        "color": "#3498db",
-    },
-    {
-        "key": "fair_share_15c",
-        "label": "1.5°C fair share",
-        "kg_per_person": 2_300,
-        "color": "#9b59b6",
-    },
-]
 
 SLICE_LABELS = {
     "home_energy": "Home Energy",
@@ -114,28 +87,51 @@ def index(request):
         total_kg = sum(annualised.values(), Decimal("0"))
         total_tonnes = round(float(total_kg) / 1000, 2)
 
+        slice_benchmarks_pre = {}
+        for sb in Benchmark.objects.filter(active=True).exclude(slice_key=""):
+            slice_benchmarks_pre.setdefault(sb.slice_key, []).append(sb)
+
         slices_display = [
             {
                 "key": k,
                 "label": SLICE_LABELS.get(k, k),
                 "kg": v,
                 "color": SLICE_COLORS.get(k, "#888"),
+                "benchmarks": [
+                    {
+                        "label": sb.label,
+                        "kg_per_person": float(sb.kg_per_person),
+                        "source": sb.source,
+                        "source_url": sb.source_url,
+                    }
+                    for sb in slice_benchmarks_pre.get(k, [])
+                ],
             }
             for k, v in annualised.items()
         ]
 
         tracked_labels = [s["label"] for s in slices_display]
 
-        benchmark_kg_values = [b["kg_per_person"] * members for b in BENCHMARKS]
+        whole_benchmarks = list(
+            Benchmark.objects.filter(active=True, slice_key="").order_by(
+                "display_order"
+            )
+        )
+        benchmark_kg_values = [
+            float(b.kg_per_person) * members for b in whole_benchmarks
+        ]
         max_value = max([float(total_kg)] + benchmark_kg_values) or 1
 
-        for b in BENCHMARKS:
-            kg_total = b["kg_per_person"] * members
+        for b in whole_benchmarks:
+            kg_total = float(b.kg_per_person) * members
             benchmarks_display.append(
                 {
-                    **b,
+                    "key": b.key,
+                    "label": b.label,
                     "kg_total": kg_total,
                     "bar_pct": int(kg_total / max_value * 100),
+                    "source": b.source,
+                    "source_url": b.source_url,
                 }
             )
 
@@ -216,14 +212,17 @@ def chart_data(request):
             for sk in periodic_slice_keys
         }
 
+    whole_benchmarks = Benchmark.objects.filter(active=True, slice_key="").order_by(
+        "display_order"
+    )
     benchmarks_monthly = [
         {
-            "key": b["key"],
-            "label": b["label"],
-            "monthly_kg": round(b["kg_per_person"] * members / 12, 1),
-            "color": b["color"],
+            "key": b.key,
+            "label": b.label,
+            "monthly_kg": round(float(b.kg_per_person) * members / 12, 1),
+            "color": "#888",
         }
-        for b in BENCHMARKS
+        for b in whole_benchmarks
     ]
 
     return JsonResponse(

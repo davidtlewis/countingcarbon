@@ -5,90 +5,313 @@
     "generated": "2026-06-12",
     "region": "GB"
   },
-
   "factor_sets": [
     {
       "name": "DESNZ 2024",
       "source": "UK Department for Energy Security and Net Zero, Greenhouse gas reporting: conversion factors 2024",
-      "licence": "Open Government Licence v3.0 — attribution required",
+      "licence": "Open Government Licence v3.0 \u2014 attribution required",
       "valid_from": "2024-06-01",
       "valid_to": null,
       "region": "GB",
       "factors": [
-        {"key": "gas_kwh",              "value": 0.18286, "unit": "kg CO2e/kWh",    "citation": "DESNZ 2024, Fuels: natural gas (gross CV)"},
-        {"key": "elec_grid_kwh",        "value": 0.20707, "unit": "kg CO2e/kWh",    "citation": "DESNZ 2024, UK electricity: generation"},
-        {"key": "heating_oil_litre",    "value": 2.5202,  "unit": "kg CO2e/litre",  "citation": "DESNZ 2024, Fuels: burning oil (kerosene)"},
-        {"key": "lpg_litre",            "value": 1.5534,  "unit": "kg CO2e/litre",  "citation": "DESNZ 2024, Fuels: LPG"},
-        {"key": "car_petrol_km",        "value": 0.17059, "unit": "kg CO2e/km",     "citation": "DESNZ 2024, Cars (by fuel): average petrol car"},
-        {"key": "car_diesel_km",        "value": 0.16844, "unit": "kg CO2e/km",     "citation": "DESNZ 2024, Cars (by fuel): average diesel car"},
-        {"key": "car_ev_km",            "value": 0.04719, "unit": "kg CO2e/km",     "citation": "DESNZ 2024, Cars: battery electric (incl. upstream electricity)"},
-        {"key": "car_hybrid_km",        "value": 0.09039, "unit": "kg CO2e/km",     "citation": "DESNZ 2024, Cars: plug-in hybrid average"},
-        {"key": "rail_national_km",     "value": 0.03549, "unit": "kg CO2e/km",     "citation": "DESNZ 2024, Rail: national rail"},
-        {"key": "rail_underground_km",  "value": 0.02754, "unit": "kg CO2e/km",     "citation": "DESNZ 2024, Rail: London Underground"},
-        {"key": "bus_local_km",         "value": 0.10312, "unit": "kg CO2e/km",     "citation": "DESNZ 2024, Bus: local bus (average)"},
-        {"key": "coach_km",             "value": 0.02726, "unit": "kg CO2e/km",     "citation": "DESNZ 2024, Bus: coach"},
-        {"key": "ferry_foot_km",        "value": 0.11875, "unit": "kg CO2e/km",     "citation": "DESNZ 2024, Ferry: foot passenger"},
-        {"key": "motorbike_km",         "value": 0.11370, "unit": "kg CO2e/km",     "citation": "DESNZ 2024, Motorbike: average"},
-        {"key": "flight_short_economy", "value": 0.25510, "unit": "kg CO2e/pax-km", "citation": "DESNZ 2024, Flights: short-haul economy, with radiative forcing (x1.9)"},
-        {"key": "flight_long_economy",  "value": 0.19521, "unit": "kg CO2e/pax-km", "citation": "DESNZ 2024, Flights: long-haul economy, with radiative forcing (x1.9)"},
-        {"key": "flight_long_business", "value": 0.42875, "unit": "kg CO2e/pax-km", "citation": "DESNZ 2024, Flights: long-haul business class, with radiative forcing (x1.9)"}
+        {
+          "key": "gas_kwh",
+          "value": 0.18286,
+          "unit": "kg CO2e/kWh",
+          "citation": "DESNZ 2024, Fuels: natural gas (gross CV)"
+        },
+        {
+          "key": "elec_grid_kwh",
+          "value": 0.20707,
+          "unit": "kg CO2e/kWh",
+          "citation": "DESNZ 2024, UK electricity: generation"
+        },
+        {
+          "key": "heating_oil_litre",
+          "value": 2.5202,
+          "unit": "kg CO2e/litre",
+          "citation": "DESNZ 2024, Fuels: burning oil (kerosene)"
+        },
+        {
+          "key": "lpg_litre",
+          "value": 1.5534,
+          "unit": "kg CO2e/litre",
+          "citation": "DESNZ 2024, Fuels: LPG"
+        },
+        {
+          "key": "car_petrol_km",
+          "value": 0.17059,
+          "unit": "kg CO2e/km",
+          "citation": "DESNZ 2024, Cars (by fuel): average petrol car"
+        },
+        {
+          "key": "car_diesel_km",
+          "value": 0.16844,
+          "unit": "kg CO2e/km",
+          "citation": "DESNZ 2024, Cars (by fuel): average diesel car"
+        },
+        {
+          "key": "car_ev_km",
+          "value": 0.04719,
+          "unit": "kg CO2e/km",
+          "citation": "DESNZ 2024, Cars: battery electric (incl. upstream electricity)"
+        },
+        {
+          "key": "car_hybrid_km",
+          "value": 0.09039,
+          "unit": "kg CO2e/km",
+          "citation": "DESNZ 2024, Cars: plug-in hybrid average"
+        },
+        {
+          "key": "rail_national_km",
+          "value": 0.03549,
+          "unit": "kg CO2e/km",
+          "citation": "DESNZ 2024, Rail: national rail"
+        },
+        {
+          "key": "rail_underground_km",
+          "value": 0.02754,
+          "unit": "kg CO2e/km",
+          "citation": "DESNZ 2024, Rail: London Underground"
+        },
+        {
+          "key": "bus_local_km",
+          "value": 0.10312,
+          "unit": "kg CO2e/km",
+          "citation": "DESNZ 2024, Bus: local bus (average)"
+        },
+        {
+          "key": "coach_km",
+          "value": 0.02726,
+          "unit": "kg CO2e/km",
+          "citation": "DESNZ 2024, Bus: coach"
+        },
+        {
+          "key": "ferry_foot_km",
+          "value": 0.11875,
+          "unit": "kg CO2e/km",
+          "citation": "DESNZ 2024, Ferry: foot passenger"
+        },
+        {
+          "key": "motorbike_km",
+          "value": 0.1137,
+          "unit": "kg CO2e/km",
+          "citation": "DESNZ 2024, Motorbike: average"
+        },
+        {
+          "key": "flight_short_economy",
+          "value": 0.2551,
+          "unit": "kg CO2e/pax-km",
+          "citation": "DESNZ 2024, Flights: short-haul economy, with radiative forcing (x1.9)"
+        },
+        {
+          "key": "flight_long_economy",
+          "value": 0.19521,
+          "unit": "kg CO2e/pax-km",
+          "citation": "DESNZ 2024, Flights: long-haul economy, with radiative forcing (x1.9)"
+        },
+        {
+          "key": "flight_long_business",
+          "value": 0.42875,
+          "unit": "kg CO2e/pax-km",
+          "citation": "DESNZ 2024, Flights: long-haul business class, with radiative forcing (x1.9)"
+        }
       ]
     },
     {
-      "name": "Food — Poore & Nemecek / Berners-Lee",
+      "name": "Food \u2014 Poore & Nemecek / Berners-Lee",
       "source": "Poore, J. & Nemecek, T. (2018) 'Reducing food's environmental impacts through producers and consumers', Science 360(6392); Berners-Lee, M. (2020) 'How Bad Are Bananas?' (rev. ed.)",
       "licence": "Published academic values, cited",
       "valid_from": "2024-01-01",
       "valid_to": null,
       "region": "GB",
       "factors": [
-        {"key": "diet_high_meat_person_year",   "value": 3300, "unit": "kg CO2e/person/yr", "citation": "Aggregate: daily meat-eater, P&N 2018 / Berners-Lee 2020"},
-        {"key": "diet_medium_meat_person_year", "value": 2500, "unit": "kg CO2e/person/yr", "citation": "Aggregate: meat a few times per week (approx. UK average)"},
-        {"key": "diet_low_meat_person_year",    "value": 1900, "unit": "kg CO2e/person/yr", "citation": "Aggregate: low meat / pescatarian"},
-        {"key": "diet_vegetarian_person_year",  "value": 1700, "unit": "kg CO2e/person/yr", "citation": "Aggregate: vegetarian"},
-        {"key": "diet_vegan_person_year",       "value": 1100, "unit": "kg CO2e/person/yr", "citation": "Aggregate: vegan"},
-        {"key": "food_beef_lamb_kg",  "value": 27.0, "unit": "kg CO2e/kg", "citation": "P&N 2018: beef & lamb (combined typical)"},
-        {"key": "food_pork_kg",       "value": 12.1, "unit": "kg CO2e/kg", "citation": "P&N 2018: pig meat"},
-        {"key": "food_poultry_kg",    "value": 6.9,  "unit": "kg CO2e/kg", "citation": "P&N 2018: poultry meat"},
-        {"key": "food_fish_kg",       "value": 5.1,  "unit": "kg CO2e/kg", "citation": "P&N 2018: fish average (wild ~3, farmed salmon ~12)"},
-        {"key": "food_dairy_kg",      "value": 3.2,  "unit": "kg CO2e/kg", "citation": "P&N 2018: dairy average (cheese ~21, milk ~3.2/litre)"},
-        {"key": "food_eggs_kg",       "value": 4.5,  "unit": "kg CO2e/kg", "citation": "P&N 2018: eggs (~18 eggs/kg)"},
-        {"key": "food_veg_kg",        "value": 0.5,  "unit": "kg CO2e/kg", "citation": "P&N 2018: fresh vegetables average"},
-        {"key": "food_fruit_kg",      "value": 0.7,  "unit": "kg CO2e/kg", "citation": "P&N 2018: fruit average (air-freighted much higher)"},
-        {"key": "food_cereals_kg",    "value": 1.4,  "unit": "kg CO2e/kg", "citation": "P&N 2018: cereals & bread"},
-        {"key": "food_legumes_kg",    "value": 1.0,  "unit": "kg CO2e/kg", "citation": "P&N 2018: legumes, pulses, tofu"},
-        {"key": "food_nuts_kg",       "value": 2.3,  "unit": "kg CO2e/kg", "citation": "P&N 2018: nuts"}
+        {
+          "key": "diet_high_meat_person_year",
+          "value": 3300,
+          "unit": "kg CO2e/person/yr",
+          "citation": "Aggregate: daily meat-eater, P&N 2018 / Berners-Lee 2020"
+        },
+        {
+          "key": "diet_medium_meat_person_year",
+          "value": 2500,
+          "unit": "kg CO2e/person/yr",
+          "citation": "Aggregate: meat a few times per week (approx. UK average)"
+        },
+        {
+          "key": "diet_low_meat_person_year",
+          "value": 1900,
+          "unit": "kg CO2e/person/yr",
+          "citation": "Aggregate: low meat / pescatarian"
+        },
+        {
+          "key": "diet_vegetarian_person_year",
+          "value": 1700,
+          "unit": "kg CO2e/person/yr",
+          "citation": "Aggregate: vegetarian"
+        },
+        {
+          "key": "diet_vegan_person_year",
+          "value": 1100,
+          "unit": "kg CO2e/person/yr",
+          "citation": "Aggregate: vegan"
+        },
+        {
+          "key": "food_beef_lamb_kg",
+          "value": 27.0,
+          "unit": "kg CO2e/kg",
+          "citation": "P&N 2018: beef & lamb (combined typical)"
+        },
+        {
+          "key": "food_pork_kg",
+          "value": 12.1,
+          "unit": "kg CO2e/kg",
+          "citation": "P&N 2018: pig meat"
+        },
+        {
+          "key": "food_poultry_kg",
+          "value": 6.9,
+          "unit": "kg CO2e/kg",
+          "citation": "P&N 2018: poultry meat"
+        },
+        {
+          "key": "food_fish_kg",
+          "value": 5.1,
+          "unit": "kg CO2e/kg",
+          "citation": "P&N 2018: fish average (wild ~3, farmed salmon ~12)"
+        },
+        {
+          "key": "food_dairy_kg",
+          "value": 3.2,
+          "unit": "kg CO2e/kg",
+          "citation": "P&N 2018: dairy average (cheese ~21, milk ~3.2/litre)"
+        },
+        {
+          "key": "food_eggs_kg",
+          "value": 4.5,
+          "unit": "kg CO2e/kg",
+          "citation": "P&N 2018: eggs (~18 eggs/kg)"
+        },
+        {
+          "key": "food_veg_kg",
+          "value": 0.5,
+          "unit": "kg CO2e/kg",
+          "citation": "P&N 2018: fresh vegetables average"
+        },
+        {
+          "key": "food_fruit_kg",
+          "value": 0.7,
+          "unit": "kg CO2e/kg",
+          "citation": "P&N 2018: fruit average (air-freighted much higher)"
+        },
+        {
+          "key": "food_cereals_kg",
+          "value": 1.4,
+          "unit": "kg CO2e/kg",
+          "citation": "P&N 2018: cereals & bread"
+        },
+        {
+          "key": "food_legumes_kg",
+          "value": 1.0,
+          "unit": "kg CO2e/kg",
+          "citation": "P&N 2018: legumes, pulses, tofu"
+        },
+        {
+          "key": "food_nuts_kg",
+          "value": 2.3,
+          "unit": "kg CO2e/kg",
+          "citation": "P&N 2018: nuts"
+        }
       ]
     },
     {
-      "name": "Consumption — Berners-Lee / WRAP / DEFRA",
+      "name": "Consumption \u2014 Berners-Lee / WRAP / DEFRA",
       "source": "Berners-Lee, M. (2020) 'How Bad Are Bananas?'; WRAP Textiles 2023; DEFRA/DESNZ spend-based supply-chain intensities; manufacturer lifecycle analyses",
       "licence": "Published values, cited per factor",
       "valid_from": "2024-01-01",
       "valid_to": null,
       "region": "GB",
       "factors": [
-        {"key": "clothing_kg",          "value": 20.0,  "unit": "kg CO2e/kg",    "citation": "WRAP Textiles 2023: ~20 kg CO2e per kg textile"},
-        {"key": "clothing_return",      "value": 3.5,   "unit": "kg CO2e/parcel","citation": "Berners-Lee 2020: online return round-trip"},
-        {"key": "smartphone_unit",      "value": 70.0,  "unit": "kg CO2e/unit",  "citation": "Manufacturer LCAs (Apple et al.): manufacturing-dominated"},
-        {"key": "laptop_unit",          "value": 300.0, "unit": "kg CO2e/unit",  "citation": "Berners-Lee 2020 (refurbished ~100)"},
-        {"key": "tv_unit",              "value": 400.0, "unit": "kg CO2e/unit",  "citation": "Berners-Lee 2020: 50-inch TV embodied carbon"},
-        {"key": "appliance_unit",       "value": 200.0, "unit": "kg CO2e/unit",  "citation": "Berners-Lee 2020: large appliance mid-point"},
-        {"key": "furniture_gbp",        "value": 0.36,  "unit": "kg CO2e/GBP",   "citation": "UK spend-based supply-chain intensity: furniture"},
-        {"key": "garden_diy_gbp",       "value": 0.30,  "unit": "kg CO2e/GBP",   "citation": "Berners-Lee estimate: garden/DIY products"},
-        {"key": "restaurant_meal",      "value": 4.0,   "unit": "kg CO2e/meal",  "citation": "Berners-Lee 2020: average restaurant meal incl. energy"},
-        {"key": "hotel_night",          "value": 8.0,   "unit": "kg CO2e/night", "citation": "Cornell Hotel Sustainability Benchmark / Berners-Lee: mid-range UK/EU"},
-        {"key": "streaming_hour",       "value": 0.018, "unit": "kg CO2e/hour",  "citation": "IEA 2023 / Carbon Trust: 1 hr HD streaming"},
-        {"key": "retail_general_gbp",   "value": 0.32,  "unit": "kg CO2e/GBP",   "citation": "DEFRA spend-based factor: general retail"}
+        {
+          "key": "clothing_kg",
+          "value": 20.0,
+          "unit": "kg CO2e/kg",
+          "citation": "WRAP Textiles 2023: ~20 kg CO2e per kg textile"
+        },
+        {
+          "key": "clothing_return",
+          "value": 3.5,
+          "unit": "kg CO2e/parcel",
+          "citation": "Berners-Lee 2020: online return round-trip"
+        },
+        {
+          "key": "smartphone_unit",
+          "value": 70.0,
+          "unit": "kg CO2e/unit",
+          "citation": "Manufacturer LCAs (Apple et al.): manufacturing-dominated"
+        },
+        {
+          "key": "laptop_unit",
+          "value": 300.0,
+          "unit": "kg CO2e/unit",
+          "citation": "Berners-Lee 2020 (refurbished ~100)"
+        },
+        {
+          "key": "tv_unit",
+          "value": 400.0,
+          "unit": "kg CO2e/unit",
+          "citation": "Berners-Lee 2020: 50-inch TV embodied carbon"
+        },
+        {
+          "key": "appliance_unit",
+          "value": 200.0,
+          "unit": "kg CO2e/unit",
+          "citation": "Berners-Lee 2020: large appliance mid-point"
+        },
+        {
+          "key": "furniture_gbp",
+          "value": 0.36,
+          "unit": "kg CO2e/GBP",
+          "citation": "UK spend-based supply-chain intensity: furniture"
+        },
+        {
+          "key": "garden_diy_gbp",
+          "value": 0.3,
+          "unit": "kg CO2e/GBP",
+          "citation": "Berners-Lee estimate: garden/DIY products"
+        },
+        {
+          "key": "restaurant_meal",
+          "value": 4.0,
+          "unit": "kg CO2e/meal",
+          "citation": "Berners-Lee 2020: average restaurant meal incl. energy"
+        },
+        {
+          "key": "hotel_night",
+          "value": 8.0,
+          "unit": "kg CO2e/night",
+          "citation": "Cornell Hotel Sustainability Benchmark / Berners-Lee: mid-range UK/EU"
+        },
+        {
+          "key": "streaming_hour",
+          "value": 0.018,
+          "unit": "kg CO2e/hour",
+          "citation": "IEA 2023 / Carbon Trust: 1 hr HD streaming"
+        },
+        {
+          "key": "retail_general_gbp",
+          "value": 0.32,
+          "unit": "kg CO2e/GBP",
+          "citation": "DEFRA spend-based factor: general retail"
+        }
       ]
     }
   ],
-
   "slices": [
     {
       "key": "home_energy",
       "name": "Home Energy",
-      "icon": "🏠",
+      "icon": "\ud83c\udfe0",
       "description": "Gas, electricity and other heating fuels, with solar export credit.",
       "entry_mode": "periodic",
       "display_order": 1,
@@ -98,70 +321,365 @@
           "label": "Natural gas",
           "help_text": "From your meter or bill, in kWh.",
           "display_order": 1,
-          "input_fields": [{"name": "kwh", "label": "Gas used", "type": "decimal", "unit": "kWh", "min": 0}],
+          "input_fields": [
+            {
+              "name": "kwh",
+              "label": "Gas used",
+              "type": "decimal",
+              "unit": "kWh",
+              "min": 0
+            }
+          ],
           "formula": "kwh * factor(\"gas_kwh\")",
-          "test_cases": [{"inputs": {"kwh": 12000}, "expected": 2194.32}]
+          "test_cases": [
+            {
+              "inputs": {
+                "kwh": 12000
+              },
+              "expected": 2194.32
+            }
+          ]
         },
         {
           "key": "electricity_import",
           "label": "Grid electricity import",
-          "help_text": "Electricity drawn FROM the grid only — exclude solar self-consumption.",
+          "help_text": "Electricity drawn FROM the grid only \u2014 exclude solar self-consumption.",
           "display_order": 2,
-          "input_fields": [{"name": "kwh", "label": "Grid import", "type": "decimal", "unit": "kWh", "min": 0}],
+          "input_fields": [
+            {
+              "name": "kwh",
+              "label": "Grid import",
+              "type": "decimal",
+              "unit": "kWh",
+              "min": 0
+            }
+          ],
           "formula": "kwh * factor(\"elec_grid_kwh\")",
-          "test_cases": [{"inputs": {"kwh": 2000}, "expected": 414.14}]
+          "test_cases": [
+            {
+              "inputs": {
+                "kwh": 2000
+              },
+              "expected": 414.14
+            }
+          ]
         },
         {
           "key": "heating_oil",
           "label": "Heating oil (kerosene)",
           "display_order": 3,
-          "input_fields": [{"name": "litres", "label": "Oil used", "type": "decimal", "unit": "litres", "min": 0}],
+          "input_fields": [
+            {
+              "name": "litres",
+              "label": "Oil used",
+              "type": "decimal",
+              "unit": "litres",
+              "min": 0
+            }
+          ],
           "formula": "litres * factor(\"heating_oil_litre\")",
-          "test_cases": [{"inputs": {"litres": 100}, "expected": 252.02}]
+          "test_cases": [
+            {
+              "inputs": {
+                "litres": 100
+              },
+              "expected": 252.02
+            }
+          ]
         },
         {
           "key": "lpg",
           "label": "LPG",
           "display_order": 4,
-          "input_fields": [{"name": "litres", "label": "LPG used", "type": "decimal", "unit": "litres", "min": 0}],
+          "input_fields": [
+            {
+              "name": "litres",
+              "label": "LPG used",
+              "type": "decimal",
+              "unit": "litres",
+              "min": 0
+            }
+          ],
           "formula": "litres * factor(\"lpg_litre\")",
-          "test_cases": [{"inputs": {"litres": 100}, "expected": 155.34}]
+          "test_cases": [
+            {
+              "inputs": {
+                "litres": 100
+              },
+              "expected": 155.34
+            }
+          ]
         },
         {
           "key": "solar_export",
           "label": "Solar export credit",
           "help_text": "Electricity exported to the grid. Counts as a credit (negative emissions) at the avoided grid rate.",
           "display_order": 5,
-          "input_fields": [{"name": "kwh", "label": "Exported", "type": "decimal", "unit": "kWh", "min": 0}],
+          "input_fields": [
+            {
+              "name": "kwh",
+              "label": "Exported",
+              "type": "decimal",
+              "unit": "kWh",
+              "min": 0
+            }
+          ],
           "formula": "-1 * kwh * factor(\"elec_grid_kwh\")",
-          "test_cases": [{"inputs": {"kwh": 5000}, "expected": -1035.35}]
+          "test_cases": [
+            {
+              "inputs": {
+                "kwh": 5000
+              },
+              "expected": -1035.35
+            }
+          ]
         }
       ]
     },
     {
       "key": "transport",
       "name": "Transport",
-      "icon": "🚗",
+      "icon": "\ud83d\ude97",
       "description": "Road and rail travel. Flights are logged separately as individual journeys.",
       "entry_mode": "periodic",
       "display_order": 2,
       "line_items": [
-        {"key": "car_petrol",  "label": "Petrol car",                "display_order": 1, "input_fields": [{"name": "km", "label": "Distance", "type": "decimal", "unit": "km", "min": 0}], "formula": "km * factor(\"car_petrol_km\")",       "test_cases": [{"inputs": {"km": 10000}, "expected": 1705.9}]},
-        {"key": "car_diesel",  "label": "Diesel car",                "display_order": 2, "input_fields": [{"name": "km", "label": "Distance", "type": "decimal", "unit": "km", "min": 0}], "formula": "km * factor(\"car_diesel_km\")",       "test_cases": [{"inputs": {"km": 10000}, "expected": 1684.4}]},
-        {"key": "car_ev",      "label": "Electric car",              "display_order": 3, "input_fields": [{"name": "km", "label": "Distance", "type": "decimal", "unit": "km", "min": 0}], "formula": "km * factor(\"car_ev_km\")",           "test_cases": [{"inputs": {"km": 10000}, "expected": 471.9}]},
-        {"key": "car_hybrid",  "label": "Plug-in hybrid car",        "display_order": 4, "input_fields": [{"name": "km", "label": "Distance", "type": "decimal", "unit": "km", "min": 0}], "formula": "km * factor(\"car_hybrid_km\")",       "test_cases": [{"inputs": {"km": 10000}, "expected": 903.9}]},
-        {"key": "rail",        "label": "National rail",             "display_order": 5, "input_fields": [{"name": "km", "label": "Distance", "type": "decimal", "unit": "km", "min": 0}], "formula": "km * factor(\"rail_national_km\")",    "test_cases": [{"inputs": {"km": 1000}, "expected": 35.49}]},
-        {"key": "underground", "label": "Underground / metro",       "display_order": 6, "input_fields": [{"name": "km", "label": "Distance", "type": "decimal", "unit": "km", "min": 0}], "formula": "km * factor(\"rail_underground_km\")", "test_cases": [{"inputs": {"km": 1000}, "expected": 27.54}]},
-        {"key": "bus",         "label": "Bus",                       "display_order": 7, "input_fields": [{"name": "km", "label": "Distance", "type": "decimal", "unit": "km", "min": 0}], "formula": "km * factor(\"bus_local_km\")",        "test_cases": [{"inputs": {"km": 1000}, "expected": 103.12}]},
-        {"key": "coach",       "label": "Coach",                     "display_order": 8, "input_fields": [{"name": "km", "label": "Distance", "type": "decimal", "unit": "km", "min": 0}], "formula": "km * factor(\"coach_km\")",            "test_cases": [{"inputs": {"km": 1000}, "expected": 27.26}]},
-        {"key": "ferry",       "label": "Ferry (foot passenger)",    "display_order": 9, "input_fields": [{"name": "km", "label": "Distance", "type": "decimal", "unit": "km", "min": 0}], "formula": "km * factor(\"ferry_foot_km\")",       "test_cases": [{"inputs": {"km": 100}, "expected": 11.875}]},
-        {"key": "motorbike",   "label": "Motorbike",                 "display_order": 10, "input_fields": [{"name": "km", "label": "Distance", "type": "decimal", "unit": "km", "min": 0}], "formula": "km * factor(\"motorbike_km\")",       "test_cases": [{"inputs": {"km": 1000}, "expected": 113.7}]}
+        {
+          "key": "car_petrol",
+          "label": "Petrol car",
+          "display_order": 1,
+          "input_fields": [
+            {
+              "name": "km",
+              "label": "Distance",
+              "type": "decimal",
+              "unit": "km",
+              "min": 0
+            }
+          ],
+          "formula": "km * factor(\"car_petrol_km\")",
+          "test_cases": [
+            {
+              "inputs": {
+                "km": 10000
+              },
+              "expected": 1705.9
+            }
+          ]
+        },
+        {
+          "key": "car_diesel",
+          "label": "Diesel car",
+          "display_order": 2,
+          "input_fields": [
+            {
+              "name": "km",
+              "label": "Distance",
+              "type": "decimal",
+              "unit": "km",
+              "min": 0
+            }
+          ],
+          "formula": "km * factor(\"car_diesel_km\")",
+          "test_cases": [
+            {
+              "inputs": {
+                "km": 10000
+              },
+              "expected": 1684.4
+            }
+          ]
+        },
+        {
+          "key": "car_ev",
+          "label": "Electric car",
+          "display_order": 3,
+          "input_fields": [
+            {
+              "name": "km",
+              "label": "Distance",
+              "type": "decimal",
+              "unit": "km",
+              "min": 0
+            }
+          ],
+          "formula": "km * factor(\"car_ev_km\")",
+          "test_cases": [
+            {
+              "inputs": {
+                "km": 10000
+              },
+              "expected": 471.9
+            }
+          ]
+        },
+        {
+          "key": "car_hybrid",
+          "label": "Plug-in hybrid car",
+          "display_order": 4,
+          "input_fields": [
+            {
+              "name": "km",
+              "label": "Distance",
+              "type": "decimal",
+              "unit": "km",
+              "min": 0
+            }
+          ],
+          "formula": "km * factor(\"car_hybrid_km\")",
+          "test_cases": [
+            {
+              "inputs": {
+                "km": 10000
+              },
+              "expected": 903.9
+            }
+          ]
+        },
+        {
+          "key": "rail",
+          "label": "National rail",
+          "display_order": 5,
+          "input_fields": [
+            {
+              "name": "km",
+              "label": "Distance",
+              "type": "decimal",
+              "unit": "km",
+              "min": 0
+            }
+          ],
+          "formula": "km * factor(\"rail_national_km\")",
+          "test_cases": [
+            {
+              "inputs": {
+                "km": 1000
+              },
+              "expected": 35.49
+            }
+          ]
+        },
+        {
+          "key": "underground",
+          "label": "Underground / metro",
+          "display_order": 6,
+          "input_fields": [
+            {
+              "name": "km",
+              "label": "Distance",
+              "type": "decimal",
+              "unit": "km",
+              "min": 0
+            }
+          ],
+          "formula": "km * factor(\"rail_underground_km\")",
+          "test_cases": [
+            {
+              "inputs": {
+                "km": 1000
+              },
+              "expected": 27.54
+            }
+          ]
+        },
+        {
+          "key": "bus",
+          "label": "Bus",
+          "display_order": 7,
+          "input_fields": [
+            {
+              "name": "km",
+              "label": "Distance",
+              "type": "decimal",
+              "unit": "km",
+              "min": 0
+            }
+          ],
+          "formula": "km * factor(\"bus_local_km\")",
+          "test_cases": [
+            {
+              "inputs": {
+                "km": 1000
+              },
+              "expected": 103.12
+            }
+          ]
+        },
+        {
+          "key": "coach",
+          "label": "Coach",
+          "display_order": 8,
+          "input_fields": [
+            {
+              "name": "km",
+              "label": "Distance",
+              "type": "decimal",
+              "unit": "km",
+              "min": 0
+            }
+          ],
+          "formula": "km * factor(\"coach_km\")",
+          "test_cases": [
+            {
+              "inputs": {
+                "km": 1000
+              },
+              "expected": 27.26
+            }
+          ]
+        },
+        {
+          "key": "ferry",
+          "label": "Ferry (foot passenger)",
+          "display_order": 9,
+          "input_fields": [
+            {
+              "name": "km",
+              "label": "Distance",
+              "type": "decimal",
+              "unit": "km",
+              "min": 0
+            }
+          ],
+          "formula": "km * factor(\"ferry_foot_km\")",
+          "test_cases": [
+            {
+              "inputs": {
+                "km": 100
+              },
+              "expected": 11.875
+            }
+          ]
+        },
+        {
+          "key": "motorbike",
+          "label": "Motorbike",
+          "display_order": 10,
+          "input_fields": [
+            {
+              "name": "km",
+              "label": "Distance",
+              "type": "decimal",
+              "unit": "km",
+              "min": 0
+            }
+          ],
+          "formula": "km * factor(\"motorbike_km\")",
+          "test_cases": [
+            {
+              "inputs": {
+                "km": 1000
+              },
+              "expected": 113.7
+            }
+          ]
+        }
       ]
     },
     {
       "key": "flights",
       "name": "Flights",
-      "icon": "✈️",
+      "icon": "\u2708\ufe0f",
       "description": "Individual flight log. Each journey is recorded with route, passengers, distance and class.",
       "entry_mode": "event",
       "display_order": 3,
@@ -172,17 +690,82 @@
           "help_text": "One-way distance in km; tick return for round trips. Short-haul threshold 3,700 km. Factors include radiative forcing (x1.9).",
           "display_order": 1,
           "input_fields": [
-            {"name": "route",       "label": "Route",            "type": "text",    "unit": null},
-            {"name": "passengers",  "label": "Passengers",       "type": "integer", "unit": "people", "min": 1},
-            {"name": "distance_km", "label": "Distance one-way", "type": "decimal", "unit": "km",     "min": 1},
-            {"name": "is_return",   "label": "Return trip",      "type": "boolean", "unit": null},
-            {"name": "cabin_class", "label": "Class",            "type": "choice",  "unit": null, "choices": [{"value": 1, "label": "Economy"}, {"value": 2, "label": "Business"}]}
+            {
+              "name": "route",
+              "label": "Route",
+              "type": "text",
+              "unit": null
+            },
+            {
+              "name": "passengers",
+              "label": "Passengers",
+              "type": "integer",
+              "unit": "people",
+              "min": 1
+            },
+            {
+              "name": "distance_km",
+              "label": "Distance one-way",
+              "type": "decimal",
+              "unit": "km",
+              "min": 1
+            },
+            {
+              "name": "is_return",
+              "label": "Return trip",
+              "type": "boolean",
+              "unit": null
+            },
+            {
+              "name": "cabin_class",
+              "label": "Class",
+              "type": "choice",
+              "unit": null,
+              "choices": [
+                {
+                  "value": 1,
+                  "label": "Economy"
+                },
+                {
+                  "value": 2,
+                  "label": "Business"
+                }
+              ]
+            }
           ],
           "formula": "passengers * distance_km * (1 + is_return) * IF(distance_km <= 3700, factor(\"flight_short_economy\"), IF(cabin_class = 2, factor(\"flight_long_business\"), factor(\"flight_long_economy\")))",
           "test_cases": [
-            {"inputs": {"route": "LHR-ATH", "passengers": 2, "distance_km": 2404, "is_return": 1, "cabin_class": 1}, "expected": 2453.04, "note": "Matches spreadsheet flight log example"},
-            {"inputs": {"route": "LHR-SIN", "passengers": 1, "distance_km": 10880, "is_return": 0, "cabin_class": 1}, "expected": 2123.88},
-            {"inputs": {"route": "LHR-SIN", "passengers": 1, "distance_km": 10880, "is_return": 0, "cabin_class": 2}, "expected": 4664.80}
+            {
+              "inputs": {
+                "route": "LHR-ATH",
+                "passengers": 2,
+                "distance_km": 2404,
+                "is_return": 1,
+                "cabin_class": 1
+              },
+              "expected": 2453.04,
+              "note": "Matches spreadsheet flight log example"
+            },
+            {
+              "inputs": {
+                "route": "LHR-SIN",
+                "passengers": 1,
+                "distance_km": 10880,
+                "is_return": 0,
+                "cabin_class": 1
+              },
+              "expected": 2123.88
+            },
+            {
+              "inputs": {
+                "route": "LHR-SIN",
+                "passengers": 1,
+                "distance_km": 10880,
+                "is_return": 0,
+                "cabin_class": 2
+              },
+              "expected": 4664.8
+            }
           ]
         }
       ]
@@ -190,57 +773,774 @@
     {
       "key": "food",
       "name": "Food & Diet",
-      "icon": "🥦",
+      "icon": "\ud83e\udd66",
       "description": "Quick estimate by diet type, or detailed breakdown by food group. Use one approach, not both.",
       "entry_mode": "annual_estimate",
       "display_order": 4,
       "line_items": [
-        {"key": "diet_high_meat",   "label": "High meat diet (daily)",          "group": "quick", "display_order": 1, "input_fields": [{"name": "people", "label": "Number of people", "type": "integer", "unit": "people", "min": 0}], "formula": "people * factor(\"diet_high_meat_person_year\")",   "test_cases": [{"inputs": {"people": 2}, "expected": 6600}]},
-        {"key": "diet_medium_meat", "label": "Medium meat diet (few times/wk)", "group": "quick", "display_order": 2, "input_fields": [{"name": "people", "label": "Number of people", "type": "integer", "unit": "people", "min": 0}], "formula": "people * factor(\"diet_medium_meat_person_year\")", "test_cases": [{"inputs": {"people": 2}, "expected": 5000}]},
-        {"key": "diet_low_meat",    "label": "Low meat / pescatarian",          "group": "quick", "display_order": 3, "input_fields": [{"name": "people", "label": "Number of people", "type": "integer", "unit": "people", "min": 0}], "formula": "people * factor(\"diet_low_meat_person_year\")",    "test_cases": [{"inputs": {"people": 2}, "expected": 3800}]},
-        {"key": "diet_vegetarian",  "label": "Vegetarian",                      "group": "quick", "display_order": 4, "input_fields": [{"name": "people", "label": "Number of people", "type": "integer", "unit": "people", "min": 0}], "formula": "people * factor(\"diet_vegetarian_person_year\")",  "test_cases": [{"inputs": {"people": 2}, "expected": 3400}]},
-        {"key": "diet_vegan",       "label": "Vegan",                           "group": "quick", "display_order": 5, "input_fields": [{"name": "people", "label": "Number of people", "type": "integer", "unit": "people", "min": 0}], "formula": "people * factor(\"diet_vegan_person_year\")",       "test_cases": [{"inputs": {"people": 2}, "expected": 2200}]},
-        {"key": "beef_lamb", "label": "Beef & lamb",            "group": "detailed", "display_order": 6,  "input_fields": [{"name": "kg", "label": "Annual amount (household)", "type": "decimal", "unit": "kg", "min": 0}], "formula": "kg * factor(\"food_beef_lamb_kg\")", "test_cases": [{"inputs": {"kg": 20}, "expected": 540}]},
-        {"key": "pork",      "label": "Pork",                   "group": "detailed", "display_order": 7,  "input_fields": [{"name": "kg", "label": "Annual amount (household)", "type": "decimal", "unit": "kg", "min": 0}], "formula": "kg * factor(\"food_pork_kg\")",      "test_cases": [{"inputs": {"kg": 10}, "expected": 121}]},
-        {"key": "poultry",   "label": "Poultry",                "group": "detailed", "display_order": 8,  "input_fields": [{"name": "kg", "label": "Annual amount (household)", "type": "decimal", "unit": "kg", "min": 0}], "formula": "kg * factor(\"food_poultry_kg\")",   "test_cases": [{"inputs": {"kg": 10}, "expected": 69}]},
-        {"key": "fish",      "label": "Fish & seafood",         "group": "detailed", "display_order": 9,  "input_fields": [{"name": "kg", "label": "Annual amount (household)", "type": "decimal", "unit": "kg", "min": 0}], "formula": "kg * factor(\"food_fish_kg\")",      "test_cases": [{"inputs": {"kg": 10}, "expected": 51}]},
-        {"key": "dairy",     "label": "Dairy",                  "group": "detailed", "display_order": 10, "input_fields": [{"name": "kg", "label": "Annual amount (household)", "type": "decimal", "unit": "kg", "min": 0}], "formula": "kg * factor(\"food_dairy_kg\")",     "test_cases": [{"inputs": {"kg": 100}, "expected": 320}]},
-        {"key": "eggs",      "label": "Eggs",                   "group": "detailed", "display_order": 11, "input_fields": [{"name": "kg", "label": "Annual amount (household)", "type": "decimal", "unit": "kg", "min": 0}], "formula": "kg * factor(\"food_eggs_kg\")",      "test_cases": [{"inputs": {"kg": 10}, "expected": 45}]},
-        {"key": "vegetables","label": "Vegetables (fresh)",     "group": "detailed", "display_order": 12, "input_fields": [{"name": "kg", "label": "Annual amount (household)", "type": "decimal", "unit": "kg", "min": 0}], "formula": "kg * factor(\"food_veg_kg\")",       "test_cases": [{"inputs": {"kg": 100}, "expected": 50}]},
-        {"key": "fruit",     "label": "Fruit",                  "group": "detailed", "display_order": 13, "input_fields": [{"name": "kg", "label": "Annual amount (household)", "type": "decimal", "unit": "kg", "min": 0}], "formula": "kg * factor(\"food_fruit_kg\")",     "test_cases": [{"inputs": {"kg": 100}, "expected": 70}]},
-        {"key": "cereals",   "label": "Cereals & bread",        "group": "detailed", "display_order": 14, "input_fields": [{"name": "kg", "label": "Annual amount (household)", "type": "decimal", "unit": "kg", "min": 0}], "formula": "kg * factor(\"food_cereals_kg\")",   "test_cases": [{"inputs": {"kg": 100}, "expected": 140}]},
-        {"key": "legumes",   "label": "Legumes & tofu",         "group": "detailed", "display_order": 15, "input_fields": [{"name": "kg", "label": "Annual amount (household)", "type": "decimal", "unit": "kg", "min": 0}], "formula": "kg * factor(\"food_legumes_kg\")",   "test_cases": [{"inputs": {"kg": 50}, "expected": 50}]},
-        {"key": "nuts",      "label": "Nuts",                   "group": "detailed", "display_order": 16, "input_fields": [{"name": "kg", "label": "Annual amount (household)", "type": "decimal", "unit": "kg", "min": 0}], "formula": "kg * factor(\"food_nuts_kg\")",      "test_cases": [{"inputs": {"kg": 10}, "expected": 23}]}
+        {
+          "key": "diet_high_meat",
+          "label": "High meat diet (daily)",
+          "group": "quick",
+          "display_order": 1,
+          "input_fields": [
+            {
+              "name": "people",
+              "label": "Number of people",
+              "type": "integer",
+              "unit": "people",
+              "min": 0
+            }
+          ],
+          "formula": "people * factor(\"diet_high_meat_person_year\")",
+          "test_cases": [
+            {
+              "inputs": {
+                "people": 2
+              },
+              "expected": 6600
+            }
+          ]
+        },
+        {
+          "key": "diet_medium_meat",
+          "label": "Medium meat diet (few times/wk)",
+          "group": "quick",
+          "display_order": 2,
+          "input_fields": [
+            {
+              "name": "people",
+              "label": "Number of people",
+              "type": "integer",
+              "unit": "people",
+              "min": 0
+            }
+          ],
+          "formula": "people * factor(\"diet_medium_meat_person_year\")",
+          "test_cases": [
+            {
+              "inputs": {
+                "people": 2
+              },
+              "expected": 5000
+            }
+          ]
+        },
+        {
+          "key": "diet_low_meat",
+          "label": "Low meat / pescatarian",
+          "group": "quick",
+          "display_order": 3,
+          "input_fields": [
+            {
+              "name": "people",
+              "label": "Number of people",
+              "type": "integer",
+              "unit": "people",
+              "min": 0
+            }
+          ],
+          "formula": "people * factor(\"diet_low_meat_person_year\")",
+          "test_cases": [
+            {
+              "inputs": {
+                "people": 2
+              },
+              "expected": 3800
+            }
+          ]
+        },
+        {
+          "key": "diet_vegetarian",
+          "label": "Vegetarian",
+          "group": "quick",
+          "display_order": 4,
+          "input_fields": [
+            {
+              "name": "people",
+              "label": "Number of people",
+              "type": "integer",
+              "unit": "people",
+              "min": 0
+            }
+          ],
+          "formula": "people * factor(\"diet_vegetarian_person_year\")",
+          "test_cases": [
+            {
+              "inputs": {
+                "people": 2
+              },
+              "expected": 3400
+            }
+          ]
+        },
+        {
+          "key": "diet_vegan",
+          "label": "Vegan",
+          "group": "quick",
+          "display_order": 5,
+          "input_fields": [
+            {
+              "name": "people",
+              "label": "Number of people",
+              "type": "integer",
+              "unit": "people",
+              "min": 0
+            }
+          ],
+          "formula": "people * factor(\"diet_vegan_person_year\")",
+          "test_cases": [
+            {
+              "inputs": {
+                "people": 2
+              },
+              "expected": 2200
+            }
+          ]
+        },
+        {
+          "key": "beef_lamb",
+          "label": "Beef & lamb",
+          "group": "detailed",
+          "display_order": 6,
+          "input_fields": [
+            {
+              "name": "kg",
+              "label": "Annual amount (household)",
+              "type": "decimal",
+              "unit": "kg",
+              "min": 0
+            }
+          ],
+          "formula": "kg * factor(\"food_beef_lamb_kg\")",
+          "test_cases": [
+            {
+              "inputs": {
+                "kg": 20
+              },
+              "expected": 540
+            }
+          ]
+        },
+        {
+          "key": "pork",
+          "label": "Pork",
+          "group": "detailed",
+          "display_order": 7,
+          "input_fields": [
+            {
+              "name": "kg",
+              "label": "Annual amount (household)",
+              "type": "decimal",
+              "unit": "kg",
+              "min": 0
+            }
+          ],
+          "formula": "kg * factor(\"food_pork_kg\")",
+          "test_cases": [
+            {
+              "inputs": {
+                "kg": 10
+              },
+              "expected": 121
+            }
+          ]
+        },
+        {
+          "key": "poultry",
+          "label": "Poultry",
+          "group": "detailed",
+          "display_order": 8,
+          "input_fields": [
+            {
+              "name": "kg",
+              "label": "Annual amount (household)",
+              "type": "decimal",
+              "unit": "kg",
+              "min": 0
+            }
+          ],
+          "formula": "kg * factor(\"food_poultry_kg\")",
+          "test_cases": [
+            {
+              "inputs": {
+                "kg": 10
+              },
+              "expected": 69
+            }
+          ]
+        },
+        {
+          "key": "fish",
+          "label": "Fish & seafood",
+          "group": "detailed",
+          "display_order": 9,
+          "input_fields": [
+            {
+              "name": "kg",
+              "label": "Annual amount (household)",
+              "type": "decimal",
+              "unit": "kg",
+              "min": 0
+            }
+          ],
+          "formula": "kg * factor(\"food_fish_kg\")",
+          "test_cases": [
+            {
+              "inputs": {
+                "kg": 10
+              },
+              "expected": 51
+            }
+          ]
+        },
+        {
+          "key": "dairy",
+          "label": "Dairy",
+          "group": "detailed",
+          "display_order": 10,
+          "input_fields": [
+            {
+              "name": "kg",
+              "label": "Annual amount (household)",
+              "type": "decimal",
+              "unit": "kg",
+              "min": 0
+            }
+          ],
+          "formula": "kg * factor(\"food_dairy_kg\")",
+          "test_cases": [
+            {
+              "inputs": {
+                "kg": 100
+              },
+              "expected": 320
+            }
+          ]
+        },
+        {
+          "key": "eggs",
+          "label": "Eggs",
+          "group": "detailed",
+          "display_order": 11,
+          "input_fields": [
+            {
+              "name": "kg",
+              "label": "Annual amount (household)",
+              "type": "decimal",
+              "unit": "kg",
+              "min": 0
+            }
+          ],
+          "formula": "kg * factor(\"food_eggs_kg\")",
+          "test_cases": [
+            {
+              "inputs": {
+                "kg": 10
+              },
+              "expected": 45
+            }
+          ]
+        },
+        {
+          "key": "vegetables",
+          "label": "Vegetables (fresh)",
+          "group": "detailed",
+          "display_order": 12,
+          "input_fields": [
+            {
+              "name": "kg",
+              "label": "Annual amount (household)",
+              "type": "decimal",
+              "unit": "kg",
+              "min": 0
+            }
+          ],
+          "formula": "kg * factor(\"food_veg_kg\")",
+          "test_cases": [
+            {
+              "inputs": {
+                "kg": 100
+              },
+              "expected": 50
+            }
+          ]
+        },
+        {
+          "key": "fruit",
+          "label": "Fruit",
+          "group": "detailed",
+          "display_order": 13,
+          "input_fields": [
+            {
+              "name": "kg",
+              "label": "Annual amount (household)",
+              "type": "decimal",
+              "unit": "kg",
+              "min": 0
+            }
+          ],
+          "formula": "kg * factor(\"food_fruit_kg\")",
+          "test_cases": [
+            {
+              "inputs": {
+                "kg": 100
+              },
+              "expected": 70
+            }
+          ]
+        },
+        {
+          "key": "cereals",
+          "label": "Cereals & bread",
+          "group": "detailed",
+          "display_order": 14,
+          "input_fields": [
+            {
+              "name": "kg",
+              "label": "Annual amount (household)",
+              "type": "decimal",
+              "unit": "kg",
+              "min": 0
+            }
+          ],
+          "formula": "kg * factor(\"food_cereals_kg\")",
+          "test_cases": [
+            {
+              "inputs": {
+                "kg": 100
+              },
+              "expected": 140
+            }
+          ]
+        },
+        {
+          "key": "legumes",
+          "label": "Legumes & tofu",
+          "group": "detailed",
+          "display_order": 15,
+          "input_fields": [
+            {
+              "name": "kg",
+              "label": "Annual amount (household)",
+              "type": "decimal",
+              "unit": "kg",
+              "min": 0
+            }
+          ],
+          "formula": "kg * factor(\"food_legumes_kg\")",
+          "test_cases": [
+            {
+              "inputs": {
+                "kg": 50
+              },
+              "expected": 50
+            }
+          ]
+        },
+        {
+          "key": "nuts",
+          "label": "Nuts",
+          "group": "detailed",
+          "display_order": 16,
+          "input_fields": [
+            {
+              "name": "kg",
+              "label": "Annual amount (household)",
+              "type": "decimal",
+              "unit": "kg",
+              "min": 0
+            }
+          ],
+          "formula": "kg * factor(\"food_nuts_kg\")",
+          "test_cases": [
+            {
+              "inputs": {
+                "kg": 10
+              },
+              "expected": 23
+            }
+          ]
+        }
       ]
     },
     {
       "key": "purchases",
       "name": "Purchases & Consumption",
-      "icon": "🛒",
-      "description": "Goods and services — annual household estimates by spend or item count.",
+      "icon": "\ud83d\uded2",
+      "description": "Goods and services \u2014 annual household estimates by spend or item count.",
       "entry_mode": "annual_estimate",
       "display_order": 5,
       "line_items": [
-        {"key": "clothing",         "label": "New clothing",                 "display_order": 1,  "input_fields": [{"name": "kg",     "label": "Weight purchased",  "type": "decimal", "unit": "kg",      "min": 0}], "formula": "kg * factor(\"clothing_kg\")",          "test_cases": [{"inputs": {"kg": 10}, "expected": 200}]},
-        {"key": "clothing_returns", "label": "Online clothing returns",      "display_order": 2,  "input_fields": [{"name": "parcels","label": "Parcels returned",  "type": "integer", "unit": "parcels", "min": 0}], "formula": "parcels * factor(\"clothing_return\")", "test_cases": [{"inputs": {"parcels": 4}, "expected": 14}]},
-        {"key": "smartphones",      "label": "New smartphones",              "display_order": 3,  "input_fields": [{"name": "units",  "label": "Devices bought",    "type": "integer", "unit": "units",   "min": 0}], "formula": "units * factor(\"smartphone_unit\")",   "test_cases": [{"inputs": {"units": 1}, "expected": 70}]},
-        {"key": "laptops",          "label": "New laptops / tablets",        "display_order": 4,  "input_fields": [{"name": "units",  "label": "Devices bought",    "type": "integer", "unit": "units",   "min": 0}], "formula": "units * factor(\"laptop_unit\")",       "test_cases": [{"inputs": {"units": 1}, "expected": 300}]},
-        {"key": "tvs",              "label": "New TVs",                      "display_order": 5,  "input_fields": [{"name": "units",  "label": "Devices bought",    "type": "integer", "unit": "units",   "min": 0}], "formula": "units * factor(\"tv_unit\")",           "test_cases": [{"inputs": {"units": 1}, "expected": 400}]},
-        {"key": "appliances",       "label": "Large appliances",             "display_order": 6,  "input_fields": [{"name": "units",  "label": "Appliances bought", "type": "integer", "unit": "units",   "min": 0}], "formula": "units * factor(\"appliance_unit\")",    "test_cases": [{"inputs": {"units": 1}, "expected": 200}]},
-        {"key": "furniture",        "label": "Furniture",                    "display_order": 7,  "input_fields": [{"name": "gbp",    "label": "Spend",             "type": "decimal", "unit": "GBP",     "min": 0}], "formula": "gbp * factor(\"furniture_gbp\")",       "test_cases": [{"inputs": {"gbp": 1000}, "expected": 360}]},
-        {"key": "garden_diy",       "label": "Garden / DIY",                 "display_order": 8,  "input_fields": [{"name": "gbp",    "label": "Spend",             "type": "decimal", "unit": "GBP",     "min": 0}], "formula": "gbp * factor(\"garden_diy_gbp\")",      "test_cases": [{"inputs": {"gbp": 500}, "expected": 150}]},
-        {"key": "restaurants",      "label": "Restaurant meals",             "display_order": 9,  "input_fields": [{"name": "meals",  "label": "Meals out",         "type": "integer", "unit": "meals",   "min": 0}], "formula": "meals * factor(\"restaurant_meal\")",   "test_cases": [{"inputs": {"meals": 50}, "expected": 200}]},
-        {"key": "hotels",           "label": "Hotel nights",                 "display_order": 10, "input_fields": [{"name": "nights", "label": "Nights",            "type": "integer", "unit": "nights",  "min": 0}], "formula": "nights * factor(\"hotel_night\")",      "test_cases": [{"inputs": {"nights": 10}, "expected": 80}]},
-        {"key": "streaming",        "label": "Streaming & gaming",           "display_order": 11, "input_fields": [{"name": "hours_per_week", "label": "Hours per week", "type": "decimal", "unit": "hours/week", "min": 0}], "formula": "hours_per_week * 52 * factor(\"streaming_hour\")", "test_cases": [{"inputs": {"hours_per_week": 10}, "expected": 9.36}]},
-        {"key": "online_shopping",  "label": "General online shopping",      "display_order": 12, "input_fields": [{"name": "gbp",    "label": "Spend",             "type": "decimal", "unit": "GBP",     "min": 0}], "formula": "gbp * factor(\"retail_general_gbp\")",  "test_cases": [{"inputs": {"gbp": 1000}, "expected": 320}]}
+        {
+          "key": "clothing",
+          "label": "New clothing",
+          "display_order": 1,
+          "input_fields": [
+            {
+              "name": "kg",
+              "label": "Weight purchased",
+              "type": "decimal",
+              "unit": "kg",
+              "min": 0
+            }
+          ],
+          "formula": "kg * factor(\"clothing_kg\")",
+          "test_cases": [
+            {
+              "inputs": {
+                "kg": 10
+              },
+              "expected": 200
+            }
+          ]
+        },
+        {
+          "key": "clothing_returns",
+          "label": "Online clothing returns",
+          "display_order": 2,
+          "input_fields": [
+            {
+              "name": "parcels",
+              "label": "Parcels returned",
+              "type": "integer",
+              "unit": "parcels",
+              "min": 0
+            }
+          ],
+          "formula": "parcels * factor(\"clothing_return\")",
+          "test_cases": [
+            {
+              "inputs": {
+                "parcels": 4
+              },
+              "expected": 14
+            }
+          ]
+        },
+        {
+          "key": "smartphones",
+          "label": "New smartphones",
+          "display_order": 3,
+          "input_fields": [
+            {
+              "name": "units",
+              "label": "Devices bought",
+              "type": "integer",
+              "unit": "units",
+              "min": 0
+            }
+          ],
+          "formula": "units * factor(\"smartphone_unit\")",
+          "test_cases": [
+            {
+              "inputs": {
+                "units": 1
+              },
+              "expected": 70
+            }
+          ]
+        },
+        {
+          "key": "laptops",
+          "label": "New laptops / tablets",
+          "display_order": 4,
+          "input_fields": [
+            {
+              "name": "units",
+              "label": "Devices bought",
+              "type": "integer",
+              "unit": "units",
+              "min": 0
+            }
+          ],
+          "formula": "units * factor(\"laptop_unit\")",
+          "test_cases": [
+            {
+              "inputs": {
+                "units": 1
+              },
+              "expected": 300
+            }
+          ]
+        },
+        {
+          "key": "tvs",
+          "label": "New TVs",
+          "display_order": 5,
+          "input_fields": [
+            {
+              "name": "units",
+              "label": "Devices bought",
+              "type": "integer",
+              "unit": "units",
+              "min": 0
+            }
+          ],
+          "formula": "units * factor(\"tv_unit\")",
+          "test_cases": [
+            {
+              "inputs": {
+                "units": 1
+              },
+              "expected": 400
+            }
+          ]
+        },
+        {
+          "key": "appliances",
+          "label": "Large appliances",
+          "display_order": 6,
+          "input_fields": [
+            {
+              "name": "units",
+              "label": "Appliances bought",
+              "type": "integer",
+              "unit": "units",
+              "min": 0
+            }
+          ],
+          "formula": "units * factor(\"appliance_unit\")",
+          "test_cases": [
+            {
+              "inputs": {
+                "units": 1
+              },
+              "expected": 200
+            }
+          ]
+        },
+        {
+          "key": "furniture",
+          "label": "Furniture",
+          "display_order": 7,
+          "input_fields": [
+            {
+              "name": "gbp",
+              "label": "Spend",
+              "type": "decimal",
+              "unit": "GBP",
+              "min": 0
+            }
+          ],
+          "formula": "gbp * factor(\"furniture_gbp\")",
+          "test_cases": [
+            {
+              "inputs": {
+                "gbp": 1000
+              },
+              "expected": 360
+            }
+          ]
+        },
+        {
+          "key": "garden_diy",
+          "label": "Garden / DIY",
+          "display_order": 8,
+          "input_fields": [
+            {
+              "name": "gbp",
+              "label": "Spend",
+              "type": "decimal",
+              "unit": "GBP",
+              "min": 0
+            }
+          ],
+          "formula": "gbp * factor(\"garden_diy_gbp\")",
+          "test_cases": [
+            {
+              "inputs": {
+                "gbp": 500
+              },
+              "expected": 150
+            }
+          ]
+        },
+        {
+          "key": "restaurants",
+          "label": "Restaurant meals",
+          "display_order": 9,
+          "input_fields": [
+            {
+              "name": "meals",
+              "label": "Meals out",
+              "type": "integer",
+              "unit": "meals",
+              "min": 0
+            }
+          ],
+          "formula": "meals * factor(\"restaurant_meal\")",
+          "test_cases": [
+            {
+              "inputs": {
+                "meals": 50
+              },
+              "expected": 200
+            }
+          ]
+        },
+        {
+          "key": "hotels",
+          "label": "Hotel nights",
+          "display_order": 10,
+          "input_fields": [
+            {
+              "name": "nights",
+              "label": "Nights",
+              "type": "integer",
+              "unit": "nights",
+              "min": 0
+            }
+          ],
+          "formula": "nights * factor(\"hotel_night\")",
+          "test_cases": [
+            {
+              "inputs": {
+                "nights": 10
+              },
+              "expected": 80
+            }
+          ]
+        },
+        {
+          "key": "streaming",
+          "label": "Streaming & gaming",
+          "display_order": 11,
+          "input_fields": [
+            {
+              "name": "hours_per_week",
+              "label": "Hours per week",
+              "type": "decimal",
+              "unit": "hours/week",
+              "min": 0
+            }
+          ],
+          "formula": "hours_per_week * 52 * factor(\"streaming_hour\")",
+          "test_cases": [
+            {
+              "inputs": {
+                "hours_per_week": 10
+              },
+              "expected": 9.36
+            }
+          ]
+        },
+        {
+          "key": "online_shopping",
+          "label": "General online shopping",
+          "display_order": 12,
+          "input_fields": [
+            {
+              "name": "gbp",
+              "label": "Spend",
+              "type": "decimal",
+              "unit": "GBP",
+              "min": 0
+            }
+          ],
+          "formula": "gbp * factor(\"retail_general_gbp\")",
+          "test_cases": [
+            {
+              "inputs": {
+                "gbp": 1000
+              },
+              "expected": 320
+            }
+          ]
+        }
       ]
     }
   ],
-
   "benchmarks": [
-    {"key": "uk_average",     "label": "UK average",              "kg_per_person_year": 10000, "source": "UK consumption-based footprint incl. imports, 2023", "scale_by_household": true},
-    {"key": "ccc_2030",       "label": "UK CCC 2030 pathway",     "kg_per_person_year": 2500,  "source": "Climate Change Committee net-zero personal budget",  "scale_by_household": true},
-    {"key": "fair_share_15c", "label": "1.5\u00b0C fair share",   "kg_per_person_year": 2300,  "source": "Equal per-capita global carbon budget",              "scale_by_household": true},
-    {"key": "global_average", "label": "Global average",          "kg_per_person_year": 4700,  "source": "Global per-capita emissions, 2023",                  "scale_by_household": true}
+    {
+      "key": "uk_average",
+      "label": "UK average",
+      "kg_per_person_year": 10000,
+      "source": "DESNZ \u2014 UK consumption-based emissions per capita, 2023",
+      "source_url": "https://www.gov.uk/government/statistics/uks-carbon-footprint",
+      "slice_key": "",
+      "display_order": 1,
+      "scale_by_household": true
+    },
+    {
+      "key": "global_average",
+      "label": "Global average",
+      "kg_per_person_year": 4700,
+      "source": "Global Carbon Project \u2014 global per-capita emissions, 2023",
+      "source_url": "https://www.globalcarbonproject.org/",
+      "slice_key": "",
+      "display_order": 2,
+      "scale_by_household": true
+    },
+    {
+      "key": "ccc_2030",
+      "label": "UK CCC 2030 pathway",
+      "kg_per_person_year": 2500,
+      "source": "Climate Change Committee \u2014 Sixth Carbon Budget, net-zero personal budget, 2020",
+      "source_url": "https://www.theccc.org.uk/publication/sixth-carbon-budget/",
+      "slice_key": "",
+      "display_order": 3,
+      "scale_by_household": true
+    },
+    {
+      "key": "fair_share_15c",
+      "label": "1.5\u00b0C fair share",
+      "kg_per_person_year": 2300,
+      "source": "SEI / C40 Cities \u2014 equal per-capita global carbon budget consistent with 1.5\u00b0C",
+      "source_url": "https://www.sei.org/featured/paris-equity-check/",
+      "slice_key": "",
+      "display_order": 4,
+      "scale_by_household": true
+    },
+    {
+      "key": "uk_avg_home_energy",
+      "label": "UK average home energy",
+      "kg_per_person_year": 2200,
+      "source": "DESNZ \u2014 UK average household energy consumption, 2023",
+      "source_url": "https://www.gov.uk/government/statistics/energy-consumption-in-the-uk",
+      "slice_key": "home_energy",
+      "display_order": 10,
+      "scale_by_household": true
+    },
+    {
+      "key": "uk_avg_transport",
+      "label": "UK average land transport",
+      "kg_per_person_year": 1900,
+      "source": "DESNZ \u2014 UK average surface transport emissions per capita, 2023",
+      "source_url": "https://www.gov.uk/government/statistics/uks-carbon-footprint",
+      "slice_key": "transport",
+      "display_order": 11,
+      "scale_by_household": true
+    },
+    {
+      "key": "uk_avg_flights",
+      "label": "UK average aviation",
+      "kg_per_person_year": 600,
+      "source": "DESNZ \u2014 UK consumption-based aviation emissions per capita, 2023",
+      "source_url": "https://www.gov.uk/government/statistics/uks-carbon-footprint",
+      "slice_key": "flights",
+      "display_order": 12,
+      "scale_by_household": false
+    },
+    {
+      "key": "uk_avg_food",
+      "label": "UK average food footprint",
+      "kg_per_person_year": 2100,
+      "source": "WWF / Tesco \u2014 The Future of UK Food report, 2021",
+      "source_url": "https://www.wwf.org.uk/sites/default/files/2021-07/Driven_to_Waste_report.pdf",
+      "slice_key": "food",
+      "display_order": 13,
+      "scale_by_household": false
+    },
+    {
+      "key": "uk_avg_purchases",
+      "label": "UK average goods & services",
+      "kg_per_person_year": 1200,
+      "source": "DESNZ \u2014 UK consumption-based household goods & services emissions, 2023",
+      "source_url": "https://www.gov.uk/government/statistics/uks-carbon-footprint",
+      "slice_key": "purchases",
+      "display_order": 14,
+      "scale_by_household": false
+    }
   ]
 }

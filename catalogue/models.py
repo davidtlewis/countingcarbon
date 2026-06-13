@@ -168,6 +168,34 @@ class Band(models.Model):
         return f"{self.band_table.name} [{self.lower_bound}] = {self.value}"
 
 
+class Benchmark(models.Model):
+    """
+    A reference carbon figure used for comparison on the dashboard.
+
+    Whole-footprint benchmarks have slice_key=''. Per-slice benchmarks are
+    tagged to a slice and shown as context in the slice breakdown.
+    """
+
+    key = models.CharField(max_length=100, unique=True)
+    label = models.CharField(max_length=200)
+    kg_per_person = models.DecimalField(max_digits=10, decimal_places=2)
+    source = models.CharField(max_length=500)
+    source_url = models.URLField(blank=True)
+    slice_key = models.CharField(
+        max_length=100,
+        blank=True,
+        help_text="Leave blank for whole-footprint benchmarks.",
+    )
+    display_order = models.PositiveIntegerField(default=0)
+    active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["display_order", "key"]
+
+    def __str__(self):
+        return self.label
+
+
 def resolve_factors(keys: list, as_of_date, region: str = "GB") -> dict:
     """
     Return {factor_key: Decimal} for each key in `keys`, using factor sets

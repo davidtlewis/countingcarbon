@@ -28,7 +28,15 @@ from django.db import transaction
 from django.db.models import Max
 from django.utils import timezone
 
-from catalogue.models import Factor, FactorSet, Formula, InputField, LineItem, Slice
+from catalogue.models import (
+    Benchmark,
+    Factor,
+    FactorSet,
+    Formula,
+    InputField,
+    LineItem,
+    Slice,
+)
 
 
 class Command(BaseCommand):
@@ -64,6 +72,7 @@ class Command(BaseCommand):
             with transaction.atomic():
                 changes += self._load_factor_sets(data.get("factor_sets", []))
                 changes += self._load_slices(data.get("slices", []))
+                changes += self._load_benchmarks(data.get("benchmarks", []))
                 if dry_run:
                     raise _Rollback()
         except _Rollback:
@@ -289,6 +298,46 @@ class Command(BaseCommand):
         else:
             changes.append(f"      [CREATED] Formula '{li.key}' v{new_version}")
 
+        return changes
+
+    # ── Benchmarks ────────────────────────────────────────────────────────────
+
+    def _load_benchmarks(self, benchmarks_data: list) -> list[str]:
+        changes: list[str] = []
+        for bm_data in benchmarks_data:
+            kg = Decimal(str(bm_data["kg_per_person_year"]))
+            bm, created = Benchmark.objects.get_or_create(
+                key=bm_data["key"],
+                defaults={
+                    "label": bm_data["label"],
+                    "kg_per_person": kg,
+                    "source": bm_data.get("source", ""),
+                    "source_url": bm_data.get("source_url", ""),
+                    "slice_key": bm_data.get("slice_key", ""),
+                    "display_order": bm_data.get("display_order", 0),
+                    "active": True,
+                },
+            )
+            if created:
+                changes.append(f"  [CREATED] Benchmark '{bm.key}'")
+            else:
+                updated_fields = []
+                for attr, val in [
+                    ("label", bm_data["label"]),
+                    ("kg_per_person", kg),
+                    ("source", bm_data.get("source", "")),
+                    ("source_url", bm_data.get("source_url", "")),
+                    ("slice_key", bm_data.get("slice_key", "")),
+                    ("display_order", bm_data.get("display_order", 0)),
+                ]:
+                    if getattr(bm, attr) != val:
+                        setattr(bm, attr, val)
+                        updated_fields.append(attr)
+                if updated_fields:
+                    bm.save(update_fields=updated_fields)
+                    changes.append(
+                        f"  [UPDATED] Benchmark '{bm.key}': {', '.join(updated_fields)}"
+                    )
         return changes
 
 

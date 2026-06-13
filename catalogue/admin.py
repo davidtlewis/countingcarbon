@@ -27,6 +27,7 @@ from django.utils import timezone
 from .models import (
     Band,
     BandTable,
+    Benchmark,
     Factor,
     FactorSet,
     Formula,
@@ -407,3 +408,24 @@ class BandInline(admin.TabularInline):
 @admin.register(BandTable)
 class BandTableAdmin(admin.ModelAdmin):
     inlines = [BandInline]
+
+
+# ── Benchmark admin ────────────────────────────────────────────────────────────
+
+
+@admin.register(Benchmark)
+class BenchmarkAdmin(admin.ModelAdmin):
+    list_display = ["label", "kg_per_person", "slice_key", "display_order", "active"]
+    list_filter = ["active", "slice_key"]
+    list_editable = ["display_order", "active"]
+    fields = [
+        "key",
+        "label",
+        "kg_per_person",
+        "source",
+        "source_url",
+        "slice_key",
+        "display_order",
+        "active",
+    ]
+    readonly_fields = ["key"]

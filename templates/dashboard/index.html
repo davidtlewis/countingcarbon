@@ -52,6 +52,11 @@
             <td>
               <span class="slice-dot" style="background:{{ s.color }}"></span>
               {{ s.label }}
+              {% for bm in s.benchmarks %}
+              <span class="slice-context">
+                avg {% if bm.source_url %}<a href="{{ bm.source_url }}" target="_blank" rel="noopener">{{ bm.kg_per_person|floatformat:0 }} kg</a>{% else %}{{ bm.kg_per_person|floatformat:0 }} kg{% endif %}
+              </span>
+              {% endfor %}
             </td>
             <td class="num">{{ s.kg|floatformat:0 }}</td>
             <td class="num">
@@ -106,10 +111,17 @@
 
       {% for b in benchmarks %}
       <div class="benchmark-row">
-        <div class="benchmark-row__label">{{ b.label }}</div>
+        <div class="benchmark-row__label">
+          {{ b.label }}
+          {% if b.source_url %}
+          <a class="benchmark-source" href="{{ b.source_url }}" target="_blank" rel="noopener" title="{{ b.source }}">source</a>
+          {% elif b.source %}
+          <span class="benchmark-source" title="{{ b.source }}">source</span>
+          {% endif %}
+        </div>
         <div class="benchmark-row__bar-wrap">
           <div class="benchmark-row__bar"
-               style="width: {{ b.bar_pct }}%; background: {{ b.color }};"></div>
+               style="width: {{ b.bar_pct }}%; background: #888;"></div>
         </div>
         <div class="benchmark-row__value">{{ b.kg_total|floatformat:0 }} kg/yr</div>
       </div>

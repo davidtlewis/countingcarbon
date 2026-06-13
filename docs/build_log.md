@@ -1,6 +1,6 @@
-# CountingCarbon — Phase 1 Build Log
+# CountingCarbon — Build Log
 
-Generated: June 2026. Covers T1–T8 (all complete).
+Generated: June 2026. Covers T1–T15 (Phase 1 and Phase 2 complete).
 
 ---
 
@@ -597,15 +597,381 @@ engine/tests/test_annualise.py  Annualisation unit tests
 
 ---
 
+---
+
+## T9 — Catalogue models ✅
+
+### What was built
+
+A `catalogue` Django app with 8 models forming the admin-editable data layer that replaces the Phase 1 hard-coded slice definitions.
+
+### Data model
+
+```
+Slice ──< LineItem ──< InputField
+                  └──< Formula
+FactorSet ──< Factor
+BandTable ──< Band
+```
+
+#### `Slice`
+```python
+key: CharField(100, unique)
+name, icon, description: text fields
+entry_mode: CharField(choices=[periodic|event|annual_estimate])
+display_order: PositiveIntegerField
+active: BooleanField
+```
+
+#### `LineItem`
+```python
+slice: ForeignKey(Slice, CASCADE)
+key: CharField(100)           # unique within slice
+label, help_text, group: text
+display_order: PositiveIntegerField
+active: BooleanField
+published_formula(): method   # latest published Formula or None
+# unique_together: (slice, key)
+```
+
+#### `InputField`
+```python
+line_item: ForeignKey(LineItem, CASCADE)
+name: CharField(100)          # unique within line_item
+label: CharField
+field_type: CharField(choices=[decimal|integer|boolean|choice|text])
+unit: CharField
+min_value: DecimalField(nullable)
+choices: JSONField(nullable)  # [{value, label}, ...] for choice fields
+display_order: PositiveIntegerField
+# unique_together: (line_item, name)
+```
+
+#### `Formula`
+```python
+line_item: ForeignKey(LineItem, CASCADE)
+expression: TextField          # DSL expression string
+version: PositiveIntegerField  # auto-incremented on publish
+test_cases: JSONField          # [{inputs: {...}, expected: float}, ...]
+published_at: DateTimeField(nullable)
+is_published: property
+# unique_together: (line_item, version)
+```
+
+#### `FactorSet` / `Factor`
+```python
+FactorSet: name, source, licence, valid_from, valid_to(nullable), region
+Factor: factor_set FK, key, value(Decimal 14,6), unit, citation
+# unique_together Factor: (factor_set, key)
+```
+
+#### `BandTable` / `Band`
+Step-function lookup tables for future non-linear factors.
+```python
+BandTable.lookup(value) -> Decimal  # highest lower_bound ≤ value wins
+```
+
+#### `resolve_factors(keys, as_of_date, region='GB') -> dict`
+Module-level function. Returns `{key: Decimal}` from factor sets valid on `as_of_date`. Raises `ValueError` on missing keys or ambiguous overlapping sets.
+
+### Data migrations
+
+- `0002_seed_home_energy.py` — seeds DESNZ 2024 factor set (home energy factors), home_energy slice with 5 line items and published v1 formulas
+- `0003_seed_flights.py` — seeds flight factors and flights slice (event mode) with 1 line item and 3 test cases
+
+### Files created
+
+```
+catalogue/models.py
+catalogue/admin.py        (see T13 for final admin UX)
+catalogue/migrations/0001_initial.py
+catalogue/migrations/0002_seed_home_energy.py
+catalogue/migrations/0003_seed_flights.py
+```
+
+---
+
+## T10 — Formula DSL & catalogue engine ✅
+
+### What was built
+
+A hand-rolled formula DSL (lexer → AST → evaluator) and a catalogue-backed calculation engine that replaces Phase 1's hard-coded arithmetic.
+
+### `engine/dsl.py`
+
+**Grammar:**
+```
+expr        := comparison
+comparison  := addition (('=' | '!=' | '<' | '<=' | '>' | '>=') addition)?
+addition    := term (('+' | '-') term)*
+term        := unary (('*' | '/') unary)*
+unary       := '-' unary | primary
+primary     := NUMBER | IDENT | call | '(' expr ')'
+call        := IF(cond, then, else)
+             | MIN(a, b, ...) | MAX(a, b, ...)
+             | ROUND(x, places)
+             | LOOKUP("table", value)
+             | factor("key")
+```
+
+Boolean comparisons return `Decimal(1)` (true) or `Decimal(0)` (false) — composable with arithmetic.
+
+**Safety limits:** `MAX_EXPRESSION_LENGTH=1000`, `MAX_AST_DEPTH=20`, `MAX_EVAL_STEPS=500`.
+
+**Errors:** `DSLSyntaxError` (parse-time), `DSLEvalError` (eval-time).
+
+**Helper functions:**
+- `parse(expression) -> AST`
+- `eval_expression(expression, context, factors, lookup_fn) -> Decimal`
+- `collect_factor_keys(node) -> set` — static analysis of factor() references
+- `collect_identifiers(node) -> set` — static analysis of identifier references
+
+### `engine/catalogue_calculate.py`
+
+```python
+class CatalogueValidationError(Exception):
+    errors: dict  # {field_path: message}  field_path = "{li_key}__{field_name}"
+
+@dataclass
+class CatalogueResult:
+    result_kg: Decimal
+    pinned_factors: dict   # {factor_key: str(value)}
+    formula_version: str   # "gas:v1|electricity_import:v2|..." joined by "|"
+
+def catalogue_calculate(slice_obj, inputs, as_of_date) -> CatalogueResult
+    # inputs: {line_item_key: {field_name: raw_value}}
+    # Validates all inputs, resolves factors in one DB query, evaluates formulas, sums total.
+
+def catalogue_recalculate(line_item, item_inputs, pinned_factors, formula_expression) -> Decimal
+    # For edits — uses stored pinned_factors, never re-resolves from DB.
+```
+
+**Text field handling:** `field_type="text"` values are stored in inputs but excluded from the numeric formula evaluation context. The DSL evaluator only receives `Decimal` values.
+
+### Files created
+
+```
+engine/dsl.py
+engine/catalogue_calculate.py
+```
+
+---
+
+## T11 — Catalogue seed migrations ✅
+
+Covered within T9 above (`0002_seed_home_energy.py`, `0003_seed_flights.py`). The Phase 1 `PeriodicEntry` records are left untouched — their `pinned_factors` remain valid. Phase 1 vs Phase 2 entry detection: `isinstance(next(iter(entry.inputs.values())), dict)`.
+
+---
+
+## T12 — Phase 2 entry views (home energy + flights) ✅
+
+### What was built
+
+Rewrote the home energy entry views to use `catalogue_calculate()`, and added a complete flights event-entry system.
+
+### `EventEntry` model
+
+```python
+household: ForeignKey(Household, CASCADE, related_name="event_entries")
+slice_key: CharField(100)
+event_date: DateField
+inputs: JSONField        # flat {field_name: value} (single line item per event)
+pinned_factors: JSONField
+result_kg: DecimalField(12, 4)
+formula_version: CharField(200)
+logged_by: ForeignKey(User, SET_NULL, null=True)
+created_at, updated_at: DateTimeField
+# ordering: ["-event_date", "-created_at"]
+```
+
+### Form field naming convention
+
+HTML input names use `{line_item_key}__{field_name}` (double underscore). `_extract_catalogue_inputs()` in views.py parses these into the nested `{li_key: {field_name: value}}` dict that `catalogue_calculate()` expects.
+
+EventEntry inputs are stored flat (no nesting) since each event covers exactly one line item.
+
+### Backwards compatibility
+
+Phase 1 entry edits use the original `recalculate(HOME_ENERGY_SLICE, flat_inputs, pinned_factors)`. Detection: `_is_phase2_entry(entry)` checks if `first_value` is a `dict`.
+
+### Flights URLs
+
+```
+/entries/flights/                     flights (list + add form)
+/entries/flights/add/                 add_flight (POST, HTMX)
+/entries/flights/<id>/row/            flight_row (HTMX cancel)
+/entries/flights/<id>/edit-form/      edit_flight_form (HTMX open edit)
+/entries/flights/<id>/edit/           edit_flight (POST, HTMX save)
+/entries/flights/<id>/delete/         delete_flight (POST, HTMX delete)
+```
+
+### Templates added
+
+```
+templates/entries/flights.html
+templates/entries/partials/flights_section.html
+templates/entries/partials/flight_row.html
+templates/entries/partials/flight_edit_row.html
+```
+
+### Files changed
+
+```
+entries/models.py          Added EventEntry
+entries/views.py           Rewrote home energy views; added all flight views
+entries/urls.py            Added flights URLs
+entries/migrations/0002_evententry.py
+templates/entries/partials/entries_section.html   Updated for catalogue fields
+templates/entries/partials/entry_row.html
+templates/entries/partials/entry_edit_row.html
+templates/base.html        Nav split: "Home Energy" + "Flights" links
+static/css/main.css        Appended: .page-subtitle, .help-text, .checkbox-label
+```
+
+---
+
+## T13 — Catalogue admin UX ✅
+
+### What was built
+
+Enhanced admin for formula lifecycle management and factor set import.
+
+### Formula editor
+
+`FormulaForm` uses a custom `MonospaceTextarea` widget (font-family: monospace, spellcheck off) for the `expression` field. Applied in both `FormulaAdmin` and `FormulaInline`.
+
+### Admin actions on `FormulaAdmin`
+
+**"Validate & run test cases"** — for each selected formula: parses the expression, resolves current factors from the DB, evaluates every test case, reports pass/fail with expected vs actual values as Django messages.
+
+**"Publish (blocked if any test case fails)"** — for each selected draft formula: runs all test cases first; if any fail, blocks publish and reports the failure. If all pass (or no test cases), sets `published_at = timezone.now()`.
+
+### FactorSet JSON import
+
+Custom admin view at `/admin/catalogue/factorset/import-json/` (linked from the FactorSet changelist via a custom template). Two-step flow:
+
+1. **Upload** — file parsed, JSON validated, `load_catalogue --dry-run` run to produce a diff
+2. **Confirm** — diff shown in a `<pre>` block with a "Confirm import" button; file content held in session between steps
+3. **Apply** — `load_catalogue` runs for real; success message shown
+
+### Entry audit admin (`entries/admin.py`)
+
+`PeriodicEntryAdmin` and `EventEntryAdmin` registered with all fields read-only. `formula_version` and `pinned_factors` visible in a collapsed "Audit trail" fieldset — allows support staff to see exactly which formula version and factor values produced each entry's `result_kg`.
+
+### Auth fix
+
+Added `"django.contrib.auth.backends.ModelBackend"` to `AUTHENTICATION_BACKENDS` (before the allauth backend). Required for Django admin login — the original config had only the allauth backend, which does not authenticate superusers created via `createsuperuser`.
+
+### Files changed
+
+```
+catalogue/admin.py                                   Full rewrite with actions + import view
+entries/admin.py                                     New: PeriodicEntryAdmin, EventEntryAdmin
+templates/admin/catalogue/factorset_import.html      New: import upload/preview/confirm template
+templates/admin/catalogue/factorset/change_list.html New: adds "Import from JSON" button
+countingcarbon/settings/base.py                      Added ModelBackend to AUTHENTICATION_BACKENDS
+```
+
+---
+
+## T14 — `load_catalogue` management command ✅
+
+### What was built
+
+`catalogue/management/commands/load_catalogue.py` — idempotent upsert of all catalogue data from a JSON seed file.
+
+### Usage
+
+```bash
+uv run python manage.py load_catalogue [path] [--dry-run]
+# Default path: fixtures/catalogue_seed.json
+```
+
+### Behaviour
+
+| Object | Match key | On mismatch |
+|---|---|---|
+| `FactorSet` | (name, region) | Created if missing |
+| `Factor` | (factor_set, key) | Created if missing; value/unit/citation updated if changed |
+| `Slice` | key | Created if missing; name/icon/description/display_order updated if changed |
+| `LineItem` | (slice, key) | Created if missing; label/help_text/group/display_order updated |
+| `InputField` | (line_item, name) | Created if missing; label/min_value/choices updated |
+| `Formula` | (line_item, expression) | If latest published formula matches expression → no-op (test_cases updated in-place if different). If expression differs → new version created and published. Old versions preserved for audit. |
+
+`--dry-run` wraps the entire operation in `transaction.atomic()` then rolls back, printing `[CREATED]`/`[UPDATED]` lines without writing to the DB.
+
+### Factor key reconciliation
+
+The Phase 1 migrations seeded the DESNZ 2024 factor set with old key names (`elec_kwh`, `oil_litres`, `lpg_litres`). The seed file uses canonical names (`elec_grid_kwh`, `heating_oil_litre`, `lpg_litre`). `load_catalogue` adds the new keys alongside the old ones and publishes new formula versions (v2) for the affected home energy line items. Old v1 formulas and factor keys are preserved.
+
+### CI integration
+
+A "Seed catalogue" step (`python manage.py load_catalogue`) was added to `.github/workflows/ci.yml` after the migrate step, making the full catalogue available during every CI run.
+
+### Files created
+
+```
+catalogue/management/__init__.py
+catalogue/management/commands/__init__.py
+catalogue/management/commands/load_catalogue.py
+```
+
+---
+
+## T15 — Catalogue parity tests ✅
+
+### What was built
+
+`tests/test_catalogue_parity.py` — 46 parametrised tests verifying every formula and test case in `fixtures/catalogue_seed.json` produces the expected result from the reference spreadsheet.
+
+### Test design
+
+All 46 test cases are collected at import time from the seed file using `_build_cases()`. Each test:
+1. Parses the formula expression to find `factor()` key references
+2. Calls `resolve_factors(keys, as_of=2025-01-01)` against the live test DB
+3. Evaluates the expression with numeric inputs as `Decimal`; text fields excluded
+4. Asserts `abs(result - expected) <= Decimal("0.01")` — the ±0.01 tolerance covers the 2 decimal place rounding used in the reference spreadsheet
+
+A session-scoped `_full_catalogue` fixture calls `call_command("load_catalogue", verbosity=0)` once before any test in the module, using `django_db_blocker.unblock()` to commit the data outside test transactions.
+
+### Coverage
+
+| Slice | Line items | Test cases |
+|---|---|---|
+| home_energy | 5 | 5 |
+| transport | 10 | 10 |
+| flights | 1 | 3 |
+| food | 16 | 16 |
+| purchases | 12 | 12 |
+| **Total** | **44** | **46** |
+
+### Bug found by CI
+
+`PeriodicEntry.formula_version` was `max_length=64`. After `load_catalogue` promotes home energy formulas to v2, the version string `gas:v1|electricity_import:v2|heating_oil:v2|lpg:v2|solar_export:v2` is 66 characters. CI caught this; field raised to `max_length=500` with migration `entries/0003_formula_version_max_length.py`.
+
+### Files created
+
+```
+tests/test_catalogue_parity.py
+entries/migrations/0003_formula_version_max_length.py
+```
+
+### Final test count
+
+98 tests pass: 24 engine unit, 20 annualise unit, 8 flow tests, 46 parity tests.
+
+---
+
 ## Running the project
 
 ```bash
 # Install dependencies
 uv sync
 
-# Copy environment file and start the server
+# Copy environment file, migrate, seed catalogue, start the server
 cp .env.example .env
 uv run python manage.py migrate
+uv run python manage.py load_catalogue
 uv run python manage.py runserver
 ```
 

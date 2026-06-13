@@ -10,6 +10,7 @@
     {{ entry.result_kg|floatformat:2 }}
   </td>
   <td class="entry-actions">
+    <a class="btn btn--sm" href="{% url 'entries:breakdown_periodic' entry.id %}">Details</a>
     <button class="btn btn--sm"
             hx-get="{% url url_edit_form entry.id %}"
             hx-target="#entry-{{ entry.id }}"

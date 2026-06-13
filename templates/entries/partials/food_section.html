@@ -103,6 +103,7 @@
           <td>{{ est.effective_from }}</td>
           <td>{{ est.mode|default:"—" }}</td>
           <td class="num">{{ est.result_kg|floatformat:0 }}</td>
+          <td><a class="btn btn--sm" href="{% url 'entries:breakdown_estimate' est.id %}">Details</a></td>
         </tr>
         {% endfor %}
       </tbody>

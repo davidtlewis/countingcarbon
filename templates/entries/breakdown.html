@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block title %}Calculation breakdown — CountingCarbon{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>How this was calculated</h1>
+  <a class="btn btn--sm" href="{{ back_url }}">← Back</a>
+</div>
+
+<div class="card breakdown-summary">
+  {% if entry_type == "periodic" %}
+  <p><strong>Period:</strong> {{ entry.period_label }}</p>
+  <p><strong>Category:</strong> {{ entry.slice_key|title|cut:"_" }}</p>
+  <p><strong>Cadence:</strong> {{ entry.get_cadence_display }}</p>
+  {% elif entry_type == "event" %}
+  <p><strong>Date:</strong> {{ entry.event_date }}</p>
+  <p><strong>Category:</strong> {{ entry.slice_key|title|cut:"_" }}</p>
+  {% elif entry_type == "estimate" %}
+  <p><strong>As of:</strong> {{ entry.effective_from }}</p>
+  <p><strong>Category:</strong> {{ entry.slice_key|title|cut:"_" }}</p>
+  {% if entry.mode %}<p><strong>Mode:</strong> {{ entry.mode }}</p>{% endif %}
+  {% endif %}
+  <p class="breakdown-total">
+    <strong>Total: {{ entry.result_kg|floatformat:2 }} kg CO₂e</strong>
+    {% if entry_type == "periodic" %}
+    &nbsp;&middot;&nbsp;
+    annualised ≈ {{ entry.result_kg|floatformat:0 }} × {{ entry.get_cadence_display|lower|cut:"ly"|cut:"ual" }} factor
+    {% endif %}
+  </p>
+  <p class="text-muted" style="font-size:0.8rem; margin:0">
+    Factors pinned at time of entry. Edit the entry to use current factors.
+  </p>
+</div>
+
+{% for item in items %}
+{% if item.inputs or item.formula_expression %}
+<div class="card breakdown-item">
+  <h2 class="breakdown-item__title">{{ item.li_key }}</h2>
+
+  {% if item.inputs %}
+  <table class="entry-table breakdown-table">
+    <thead><tr><th>Input</th><th class="num">Value</th></tr></thead>
+    <tbody>
+      {% for field_name, value in item.inputs.items %}
+      {% if value != "" and value != None %}
+      <tr>
+        <td><code>{{ field_name }}</code></td>
+        <td class="num">{{ value }}</td>
+      </tr>
+      {% endif %}
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+
+  {% if item.formula_expression %}
+  <div class="breakdown-formula">
+    <span class="breakdown-formula__label">Formula:</span>
+    <code class="breakdown-formula__expr">{{ item.formula_expression }}</code>
+    <span class="breakdown-formula__ver">v{{ item.formula_version }}</span>
+  </div>
+  {% endif %}
+
+  {% if item.used_factors %}
+  <table class="entry-table breakdown-table">
+    <thead>
+      <tr>
+        <th>Factor</th>
+        <th class="num">Value</th>
+        <th>Source</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for f in item.used_factors %}
+      <tr>
+        <td><code>{{ f.key }}</code></td>
+        <td class="num">{{ f.value }}</td>
+        <td class="breakdown-citation">
+          {% if f.citation %}{{ f.citation }}{% endif %}
+          {% if f.factor_set %}<span class="text-muted">({{ f.factor_set }})</span>{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+
+  {% if item.line_result is not None %}
+  <p class="breakdown-line-result">
+    Result: <strong>{{ item.line_result|floatformat:4 }} kg CO₂e</strong>
+  </p>
+  {% endif %}
+</div>
+{% endif %}
+{% endfor %}
+
+<div class="card breakdown-factors-note">
+  <h2>About the emission factors</h2>
+  <p>
+    Emission factors are sourced from the
+    <strong>UK Department for Energy Security and Net Zero (DESNZ)</strong>
+    Greenhouse Gas Reporting: Conversion Factors, updated annually.
+    They are released under the
+    <a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/" target="_blank" rel="noopener">
+      Open Government Licence v3.0
+    </a>.
+  </p>
+  <p>
+    <a href="/catalogue/">Browse all slices, formulas and factor sources →</a>
+  </p>
+</div>
+{% endblock %}

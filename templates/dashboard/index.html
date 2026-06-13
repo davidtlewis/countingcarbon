@@ -51,7 +51,7 @@
           <tr>
             <td>
               <span class="slice-dot" style="background:{{ s.color }}"></span>
-              {{ s.label }}
+              <a href="{{ s.url }}">{{ s.label }}</a>
               {% for bm in s.benchmarks %}
               <span class="slice-context">
                 avg {% if bm.source_url %}<a href="{{ bm.source_url }}" target="_blank" rel="noopener">{{ bm.kg_per_person|floatformat:0 }} kg</a>{% else %}{{ bm.kg_per_person|floatformat:0 }} kg{% endif %}

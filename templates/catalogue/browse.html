@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block title %}Emission Factor Catalogue — CountingCarbon{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>Emission Factor Catalogue</h1>
+  <p class="page-subtitle">
+    Every number in CountingCarbon comes from one of the formulas and factors below.
+    Nothing is hidden.
+  </p>
+</div>
+
+{# ── OGL attribution ─────────────────────────────────────────────────────── #}
+<div class="card catalogue-ogl">
+  <p>
+    <strong>Data source:</strong>
+    Emission factors are from the
+    <a href="https://www.gov.uk/government/collections/government-conversion-factors-for-company-reporting"
+       target="_blank" rel="noopener">
+      UK Department for Energy Security and Net Zero (DESNZ)
+      Greenhouse Gas Reporting: Conversion Factors
+    </a>, updated annually.
+    Released under the
+    <a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"
+       target="_blank" rel="noopener">
+      Open Government Licence v3.0 (OGL)
+    </a>.
+    &copy; Crown Copyright.
+  </p>
+</div>
+
+{# ── Slices ──────────────────────────────────────────────────────────────── #}
+<h2 class="catalogue-section-heading">Calculation categories</h2>
+
+{% for slice in slices %}
+<details class="card catalogue-slice">
+  <summary>
+    <strong>{{ slice.name }}</strong>
+    <span class="badge">{{ slice.entry_mode }}</span>
+    <span class="text-muted catalogue-slice__count">
+      {{ slice.line_items.count }} line item{{ slice.line_items.count|pluralize }}
+    </span>
+  </summary>
+
+  {% if slice.description %}
+  <p class="catalogue-slice__desc">{{ slice.description }}</p>
+  {% endif %}
+
+  {% for li in slice.line_items.all %}
+  {% if li.active %}
+  {% with formula=li.published_formula %}
+  <div class="catalogue-li">
+    <h3 class="catalogue-li__title">{{ li.label }} <code class="catalogue-li__key">{{ li.key }}</code></h3>
+
+    {% if li.input_fields.exists %}
+    <div class="catalogue-li__inputs">
+      <strong>Inputs:</strong>
+      {% for field in li.input_fields.order_by('display_order') %}
+      <span class="catalogue-input-tag">
+        <code>{{ field.name }}</code>
+        {% if field.unit %}({{ field.unit }}){% endif %}
+        <span class="text-muted">{{ field.field_type }}</span>
+      </span>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if formula %}
+    <div class="catalogue-formula">
+      <strong>Formula v{{ formula.version }}:</strong>
+      <code class="catalogue-formula__expr">{{ formula.expression }}</code>
+    </div>
+    {% else %}
+    <p class="text-muted"><em>No published formula.</em></p>
+    {% endif %}
+
+    {% if li.help_text %}
+    <p class="catalogue-li__help">{{ li.help_text }}</p>
+    {% endif %}
+  </div>
+  {% endwith %}
+  {% endif %}
+  {% empty %}
+  <p class="text-muted">No line items.</p>
+  {% endfor %}
+</details>
+{% empty %}
+<p class="text-muted">No catalogue entries yet.</p>
+{% endfor %}
+
+{# ── Factor sets ──────────────────────────────────────────────────────────── #}
+<h2 class="catalogue-section-heading">Emission factor sets</h2>
+
+{% for fs in factor_sets %}
+<details class="card catalogue-factorset">
+  <summary>
+    <strong>{{ fs.name }}</strong>
+    <span class="text-muted">{{ fs.region }} &middot; valid from {{ fs.valid_from }}{% if fs.valid_to %} to {{ fs.valid_to }}{% endif %}</span>
+  </summary>
+
+  {% if fs.source %}
+  <p class="catalogue-fs__source">
+    <strong>Source:</strong> {{ fs.source }}
+    {% if fs.licence %}&middot; <span class="text-muted">{{ fs.licence }}</span>{% endif %}
+  </p>
+  {% endif %}
+
+  <table class="entry-table catalogue-factors-table">
+    <thead>
+      <tr>
+        <th>Key</th>
+        <th class="num">Value</th>
+        <th>Unit</th>
+        <th>Citation</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for factor in fs.factors.all %}
+      <tr>
+        <td><code>{{ factor.key }}</code></td>
+        <td class="num">{{ factor.value }}</td>
+        <td>{{ factor.unit }}</td>
+        <td class="catalogue-citation">{{ factor.citation }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="4" class="text-muted">No factors.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</details>
+{% endfor %}
+
+{% endblock %}

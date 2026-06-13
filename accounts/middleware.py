@@ -4,6 +4,7 @@ from django.shortcuts import redirect
 _ONBOARDING_EXEMPT_PREFIXES = (
     "/accounts/",
     "/admin/",
+    "/catalogue/",
     "/onboarding/",
     "/privacy/",
     "/static/",

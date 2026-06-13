@@ -786,3 +786,193 @@ def purchases_save(request):
         )
 
     return render(request, "entries/partials/purchases_section.html", ctx)
+
+
+# ── Breakdown (transparency) ──────────────────────────────────────────────────
+
+
+def _parse_formula_version(formula_version: str) -> dict:
+    """Parse 'li_key:v1|other:v2' → {'li_key': 1, 'other': 2}."""
+    result = {}
+    for part in formula_version.split("|"):
+        if ":v" in part:
+            key, ver = part.rsplit(":v", 1)
+            try:
+                result[key] = int(ver)
+            except ValueError:
+                pass
+    return result
+
+
+def _build_breakdown_items(inputs, pinned_factors, formula_version, flat_inputs=False):
+    """
+    Return a list of breakdown dicts, one per line item in formula_version.
+
+    flat_inputs=True: inputs is {field_name: value} (EventEntry style, single li_key).
+    flat_inputs=False: inputs is {li_key: {field_name: value}}.
+    """
+    from decimal import Decimal
+
+    from catalogue.models import Factor, Formula
+    from engine.dsl import (
+        DSLEvalError,
+        DSLSyntaxError,
+        collect_factor_keys,
+        eval_expression,
+        parse,
+    )
+
+    version_map = _parse_formula_version(formula_version)
+
+    # Bulk fetch formulas and factors
+    formulas = {}
+    for li_key, ver in version_map.items():
+        try:
+            formulas[li_key] = Formula.objects.select_related("line_item__slice").get(
+                line_item__key=li_key, version=ver
+            )
+        except Formula.DoesNotExist:
+            pass
+
+    factor_qs = Factor.objects.filter(key__in=pinned_factors.keys()).select_related(
+        "factor_set"
+    )
+    factor_meta = {}
+    for f in factor_qs:
+        if f.key not in factor_meta:
+            factor_meta[f.key] = {
+                "citation": f.citation,
+                "factor_set": f.factor_set.name,
+                "source": f.factor_set.source,
+                "licence": f.factor_set.licence,
+            }
+
+    items = []
+    for li_key, ver in version_map.items():
+        formula = formulas.get(li_key)
+        if flat_inputs:
+            li_inputs = inputs
+        else:
+            li_inputs = inputs.get(li_key, {}) if isinstance(inputs, dict) else {}
+
+        # Determine which factor keys this formula uses
+        used_factor_keys = set()
+        if formula:
+            try:
+                ast = parse(formula.expression)
+                used_factor_keys = collect_factor_keys(ast)
+            except (DSLSyntaxError, Exception):
+                pass
+
+        used_factors = [
+            {
+                "key": k,
+                "value": pinned_factors.get(k, "?"),
+                **factor_meta.get(
+                    k, {"citation": "", "factor_set": "", "source": "", "licence": ""}
+                ),
+            }
+            for k in sorted(used_factor_keys)
+            if k in pinned_factors
+        ]
+
+        # Re-evaluate per line item so we can show the arithmetic result
+        line_result = None
+        if formula and pinned_factors:
+            try:
+                numeric_inputs = {
+                    k: Decimal(str(v))
+                    for k, v in li_inputs.items()
+                    if v not in (None, "", "None")
+                    and not isinstance(v, str)
+                    or (
+                        isinstance(v, str)
+                        and v.lstrip("-").replace(".", "", 1).isdigit()
+                    )
+                }
+                # Re-parse as Decimal properly
+                numeric_inputs = {}
+                for k, v in li_inputs.items():
+                    if v is None or v == "":
+                        numeric_inputs[k] = Decimal(0)
+                    else:
+                        try:
+                            numeric_inputs[k] = Decimal(str(v))
+                        except Exception:
+                            pass
+                factors_dec = {k: Decimal(str(v)) for k, v in pinned_factors.items()}
+                line_result = eval_expression(
+                    formula.expression, numeric_inputs, factors_dec
+                )
+            except (DSLSyntaxError, DSLEvalError, Exception):
+                pass
+
+        items.append(
+            {
+                "li_key": li_key,
+                "formula_version": ver,
+                "formula_expression": formula.expression if formula else None,
+                "inputs": li_inputs,
+                "used_factors": used_factors,
+                "line_result": line_result,
+            }
+        )
+
+    return items
+
+
+@login_required
+def breakdown_periodic(request, entry_id):
+    household = _get_household(request)
+    entry = get_object_or_404(PeriodicEntry, id=entry_id, household=household)
+    items = _build_breakdown_items(
+        entry.inputs, entry.pinned_factors, entry.formula_version
+    )
+    return render(
+        request,
+        "entries/breakdown.html",
+        {
+            "entry": entry,
+            "entry_type": "periodic",
+            "items": items,
+            "back_url": f"/entries/{entry.slice_key.replace('_', '-')}/",
+        },
+    )
+
+
+@login_required
+def breakdown_event(request, entry_id):
+    household = _get_household(request)
+    entry = get_object_or_404(EventEntry, id=entry_id, household=household)
+    items = _build_breakdown_items(
+        entry.inputs, entry.pinned_factors, entry.formula_version, flat_inputs=True
+    )
+    return render(
+        request,
+        "entries/breakdown.html",
+        {
+            "entry": entry,
+            "entry_type": "event",
+            "items": items,
+            "back_url": f"/entries/{entry.slice_key}/",
+        },
+    )
+
+
+@login_required
+def breakdown_estimate(request, entry_id):
+    household = _get_household(request)
+    entry = get_object_or_404(AnnualEstimate, id=entry_id, household=household)
+    items = _build_breakdown_items(
+        entry.inputs, entry.pinned_factors, entry.formula_version
+    )
+    return render(
+        request,
+        "entries/breakdown.html",
+        {
+            "entry": entry,
+            "entry_type": "estimate",
+            "items": items,
+            "back_url": f"/entries/{entry.slice_key}/",
+        },
+    )

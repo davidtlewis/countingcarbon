@@ -40,6 +40,22 @@ urlpatterns = [
     ),
     path("flights/<int:entry_id>/edit/", views.edit_flight, name="edit_flight"),
     path("flights/<int:entry_id>/delete/", views.delete_flight, name="delete_flight"),
+    # Breakdowns (transparency)
+    path(
+        "breakdown/periodic/<int:entry_id>/",
+        views.breakdown_periodic,
+        name="breakdown_periodic",
+    ),
+    path(
+        "breakdown/event/<int:entry_id>/",
+        views.breakdown_event,
+        name="breakdown_event",
+    ),
+    path(
+        "breakdown/estimate/<int:entry_id>/",
+        views.breakdown_estimate,
+        name="breakdown_estimate",
+    ),
     # Food (annual estimate)
     path("food/", views.food, name="food"),
     path("food/save/", views.food_save, name="food_save"),

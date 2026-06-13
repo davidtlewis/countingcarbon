@@ -8,6 +8,7 @@
   <td>{% if entry.inputs.cabin_class == "2" %}Business{% else %}Economy{% endif %}</td>
   <td class="num">{{ entry.result_kg|floatformat:0 }}</td>
   <td class="entry-actions">
+    <a class="btn btn--sm" href="{% url 'entries:breakdown_event' entry.id %}">Details</a>
     <button class="btn btn--sm"
             hx-get="{% url 'entries:edit_flight_form' entry.id %}"
             hx-target="#flight-{{ entry.id }}"

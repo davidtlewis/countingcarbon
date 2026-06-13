@@ -11,6 +11,7 @@ urlpatterns = [
     path("onboarding/", onboarding, name="onboarding"),
     path("dashboard/", include("dashboard.urls")),
     path("entries/", include("entries.urls")),
+    path("catalogue/", include("catalogue.urls")),
     path(
         "privacy/", TemplateView.as_view(template_name="privacy.html"), name="privacy"
     ),

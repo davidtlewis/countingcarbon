@@ -17,6 +17,14 @@ SLICE_LABELS = {
     "purchases": "Purchases & Services",
 }
 
+SLICE_URLS = {
+    "home_energy": "/entries/home-energy/",
+    "transport": "/entries/transport/",
+    "flights": "/entries/flights/",
+    "food": "/entries/food/",
+    "purchases": "/entries/purchases/",
+}
+
 # Colours for per-slice chart series
 SLICE_COLORS = {
     "home_energy": "#2d8a4e",
@@ -95,6 +103,7 @@ def index(request):
             {
                 "key": k,
                 "label": SLICE_LABELS.get(k, k),
+                "url": SLICE_URLS.get(k, f"/entries/{k}/"),
                 "kg": v,
                 "color": SLICE_COLORS.get(k, "#888"),
                 "benchmarks": [

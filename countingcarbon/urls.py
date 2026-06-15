@@ -3,12 +3,14 @@ from django.urls import include, path
 from django.views.generic import TemplateView
 
 from accounts.views import onboarding
+from accounts.wizard import wizard_view
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("accounts/", include("allauth.urls")),
     path("accounts/", include("accounts.urls")),
     path("onboarding/", onboarding, name="onboarding"),
+    path("onboarding/wizard/<int:step>/", wizard_view, name="onboarding_wizard"),
     path("dashboard/", include("dashboard.urls")),
     path("entries/", include("entries.urls")),
     path("catalogue/", include("catalogue.urls")),

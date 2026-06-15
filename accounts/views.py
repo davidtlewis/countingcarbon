@@ -70,8 +70,7 @@ def onboarding(request):
             )
         household = Household.objects.create(name=name)
         HouseholdMembership.objects.create(user=request.user, household=household)
-        messages.success(request, f"Welcome! “{household.name}” is all set up.")
-        return redirect("accounts:household")
+        return redirect("onboarding_wizard", step=1)
 
     return render(request, "accounts/onboarding.html")
 

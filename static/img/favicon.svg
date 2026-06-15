@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <rect width="32" height="32" rx="6" fill="#1a5c2e"/>
+  <!-- Leaf shape -->
+  <path d="M16 6 C16 6, 26 10, 26 20 C26 20, 20 26, 16 26 C16 26, 6 26, 6 20 C6 20, 6 10, 16 6 Z" fill="#4ab870"/>
+  <!-- Stem -->
+  <line x1="16" y1="26" x2="16" y2="30" stroke="#4ab870" stroke-width="2" stroke-linecap="round"/>
+  <!-- Vein -->
+  <path d="M16 12 C16 12, 12 17, 14 22" stroke="#1a5c2e" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+</svg>

@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+
+{% block title %}Quick estimate — step {{ step }} of {{ total_steps }} — CountingCarbon{% endblock %}
+
+{% block content %}
+<div class="wizard">
+  <div class="wizard__header">
+    <h1>Build your first footprint estimate</h1>
+    <p class="wizard__subtitle">Answer a few quick questions and we'll create a starting point you can refine later.</p>
+    <div class="wizard__progress" role="progressbar" aria-valuenow="{{ progress_pct }}" aria-valuemin="0" aria-valuemax="100">
+      <div class="wizard__progress-bar" style="width: {{ progress_pct }}%"></div>
+    </div>
+    <p class="wizard__step-label">Step {{ step }} of {{ total_steps }}: {{ step_title }}</p>
+  </div>
+
+  {% if error %}
+  <div class="form-errors wizard__error">{{ error }}</div>
+  {% endif %}
+
+  <form method="post" class="wizard__form">
+    {% csrf_token %}
+
+    {% if step == 1 %}
+    <fieldset>
+      <legend>What is your home&rsquo;s main heating source?</legend>
+      <div class="wizard__radio-group">
+        <label class="wizard__radio"><input type="radio" name="heating" value="gas" required> Gas central heating</label>
+        <label class="wizard__radio"><input type="radio" name="heating" value="electric"> Electric storage heaters</label>
+        <label class="wizard__radio"><input type="radio" name="heating" value="heat_pump"> Heat pump</label>
+        <label class="wizard__radio"><input type="radio" name="heating" value="oil"> Heating oil (oil-fired boiler)</label>
+        <label class="wizard__radio"><input type="radio" name="heating" value="lpg"> LPG</label>
+        <label class="wizard__radio"><input type="radio" name="heating" value="none"> No central heating / other</label>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>How big is your home?</legend>
+      <div class="wizard__radio-group">
+        <label class="wizard__radio"><input type="radio" name="size" value="0" required> 1 bedroom (studio or 1-bed flat)</label>
+        <label class="wizard__radio"><input type="radio" name="size" value="1" checked> 2 bedrooms</label>
+        <label class="wizard__radio"><input type="radio" name="size" value="2"> 3 bedrooms</label>
+        <label class="wizard__radio"><input type="radio" name="size" value="3"> 4 or more bedrooms</label>
+      </div>
+    </fieldset>
+
+    {% elif step == 2 %}
+    <fieldset>
+      <legend>Do you regularly drive a car?</legend>
+      <div class="wizard__radio-group">
+        <label class="wizard__radio"><input type="radio" name="has_car" value="no" id="no_car" required> No car (or very rarely drive)</label>
+        <label class="wizard__radio"><input type="radio" name="has_car" value="yes" id="has_car"> Yes, I drive regularly</label>
+      </div>
+    </fieldset>
+
+    <div id="car_details" class="wizard__conditional">
+      <fieldset>
+        <legend>What fuel type?</legend>
+        <div class="wizard__radio-group">
+          <label class="wizard__radio"><input type="radio" name="fuel" value="petrol"> Petrol</label>
+          <label class="wizard__radio"><input type="radio" name="fuel" value="diesel"> Diesel</label>
+          <label class="wizard__radio"><input type="radio" name="fuel" value="electric"> Electric (EV)</label>
+          <label class="wizard__radio"><input type="radio" name="fuel" value="hybrid"> Hybrid (petrol/electric)</label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Roughly how many kilometres do you drive per year?</legend>
+        <div class="wizard__radio-group">
+          <label class="wizard__radio"><input type="radio" name="mileage" value="0"> Under 5,000 km</label>
+          <label class="wizard__radio"><input type="radio" name="mileage" value="1" checked> 5,000 &ndash; 10,000 km</label>
+          <label class="wizard__radio"><input type="radio" name="mileage" value="2"> 10,000 &ndash; 20,000 km</label>
+          <label class="wizard__radio"><input type="radio" name="mileage" value="3"> Over 20,000 km</label>
+        </div>
+      </fieldset>
+    </div>
+
+    <script>
+      (function() {
+        function toggle() {
+          var yes = document.getElementById('has_car').checked;
+          document.getElementById('car_details').style.display = yes ? '' : 'none';
+        }
+        document.querySelectorAll('[name="has_car"]').forEach(function(r) { r.addEventListener('change', toggle); });
+        toggle();
+      })();
+    </script>
+
+    {% elif step == 3 %}
+    <fieldset>
+      <legend>How many short-haul flights did you take in the past year?</legend>
+      <p class="wizard__hint">Short-haul = under about 3 hours (e.g. UK to Europe)</p>
+      <div class="wizard__radio-group">
+        <label class="wizard__radio"><input type="radio" name="short_haul" value="0" checked required> None</label>
+        <label class="wizard__radio"><input type="radio" name="short_haul" value="1-2"> 1 &ndash; 2 flights</label>
+        <label class="wizard__radio"><input type="radio" name="short_haul" value="3-5"> 3 &ndash; 5 flights</label>
+        <label class="wizard__radio"><input type="radio" name="short_haul" value="6+"> 6 or more</label>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>And long-haul flights?</legend>
+      <p class="wizard__hint">Long-haul = over about 6 hours (e.g. UK to North America, Asia, Australia)</p>
+      <div class="wizard__radio-group">
+        <label class="wizard__radio"><input type="radio" name="long_haul" value="0" checked required> None</label>
+        <label class="wizard__radio"><input type="radio" name="long_haul" value="1-2"> 1 &ndash; 2 flights</label>
+        <label class="wizard__radio"><input type="radio" name="long_haul" value="3+"> 3 or more</label>
+      </div>
+    </fieldset>
+
+    {% elif step == 4 %}
+    <fieldset>
+      <legend>How would you describe your diet?</legend>
+      <div class="wizard__radio-group">
+        <label class="wizard__radio"><input type="radio" name="diet" value="high_meat" required> High meat &mdash; beef or lamb most days</label>
+        <label class="wizard__radio"><input type="radio" name="diet" value="medium_meat" checked> Medium meat &mdash; meat a few times a week</label>
+        <label class="wizard__radio"><input type="radio" name="diet" value="low_meat"> Low meat &mdash; meat once a week or less</label>
+        <label class="wizard__radio"><input type="radio" name="diet" value="vegetarian"> Vegetarian</label>
+        <label class="wizard__radio"><input type="radio" name="diet" value="vegan"> Vegan</label>
+      </div>
+    </fieldset>
+
+    <div class="form-group">
+      <label for="id_people">How many people does this cover?</label>
+      <p class="wizard__hint">Include everyone in your household who eats this way.</p>
+      <input type="number" id="id_people" name="people" value="1" min="1" max="20" style="width: 80px">
+    </div>
+
+    {% elif step == 5 %}
+    <fieldset>
+      <legend>How would you describe your overall level of consumption?</legend>
+      <p class="wizard__hint">Think about clothing, gadgets, furniture, eating out, and online shopping.</p>
+      <div class="wizard__radio-group wizard__radio-group--cards">
+        <label class="wizard__radio wizard__radio--card">
+          <input type="radio" name="level" value="low" required>
+          <span class="wizard__card-title">Low</span>
+          <span class="wizard__card-desc">Buy second-hand when possible, rarely buy new gadgets, eat out infrequently</span>
+        </label>
+        <label class="wizard__radio wizard__radio--card">
+          <input type="radio" name="level" value="typical" checked>
+          <span class="wizard__card-title">Typical</span>
+          <span class="wizard__card-desc">Average UK consumer &mdash; buy new clothes a few times a year, eat out occasionally</span>
+        </label>
+        <label class="wizard__radio wizard__radio--card">
+          <input type="radio" name="level" value="high">
+          <span class="wizard__card-title">High</span>
+          <span class="wizard__card-desc">Frequent new purchases, regular eating out and hotels, multiple devices</span>
+        </label>
+      </div>
+    </fieldset>
+    {% endif %}
+
+    <div class="wizard__actions">
+      <button type="submit" class="btn btn--primary">
+        {% if step < total_steps %}Next &rarr;{% else %}See my estimate &rarr;{% endif %}
+      </button>
+      <button type="submit" name="skip" value="1" class="btn btn--ghost">Skip this step</button>
+      {% if step == 1 %}
+      <button type="submit" name="skip_all" value="1" class="btn btn--ghost wizard__skip-all">
+        Skip &mdash; I&rsquo;ll enter data manually
+      </button>
+      {% endif %}
+    </div>
+  </form>
+
+  <p class="wizard__reassurance">
+    All answers are estimates &mdash; you can replace any of them with real figures later.
+  </p>
+</div>
+{% endblock %}

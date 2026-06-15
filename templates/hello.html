@@ -2,41 +2,134 @@
 
 {% block title %}CountingCarbon — Track your household carbon footprint{% endblock %}
 
+{% block extra_head %}
+<meta name="description" content="CountingCarbon helps your household measure and reduce its carbon footprint. Track energy, travel, food and purchases using DESNZ-cited emission factors — free and open.">
+<meta property="og:title" content="CountingCarbon — Track your household carbon footprint">
+<meta property="og:description" content="Measure your household carbon footprint using government emission factors. Free, transparent, no ads.">
+<meta property="og:type" content="website">
+{% endblock %}
+
 {% block content %}
-<div class="hero">
-  <div class="hero__icon" aria-hidden="true">🌿</div>
-  <h1>CountingCarbon</h1>
-  <p class="hero__tagline">
-    Track your household carbon footprint over time.<br>
-    Enter your energy use. See trends. Know what&rsquo;s working.
+
+{# ── Hero ──────────────────────────────────────────────────────────────────── #}
+<div class="landing-hero">
+  <h1>Know your household<br>carbon footprint</h1>
+  <p class="tagline">
+    Enter your energy, travel, food and purchases.<br>
+    See exactly where your emissions come from and track them over time.
   </p>
   {% if user.is_authenticated %}
-  <p>
+  <div class="hero-cta">
     <a class="btn btn--primary" href="/dashboard/">Go to dashboard</a>
-  </p>
+  </div>
   {% else %}
-  <p class="hero__cta">
-    <a class="btn btn--primary" href="{% url 'account_signup' %}">Get started — it&rsquo;s free</a>
-    <a class="btn btn--secondary" href="{% url 'account_login' %}">Sign in</a>
-  </p>
+  <div class="hero-cta">
+    <a class="btn btn--primary" href="{% url 'account_signup' %}">Get started &mdash; it&rsquo;s free</a>
+    <a class="btn btn--outline" href="{% url 'account_login' %}">Sign in</a>
+  </div>
   {% endif %}
 </div>
 
-<div class="features">
-  <div class="feature">
-    <div class="feature__icon" aria-hidden="true">⚡</div>
-    <h3>Home energy</h3>
-    <p>Log gas, electricity, heating oil, LPG and solar export. Monthly, quarterly, or annual — your choice.</p>
-  </div>
-  <div class="feature">
-    <div class="feature__icon" aria-hidden="true">📈</div>
-    <h3>Trend chart</h3>
-    <p>See your monthly footprint over time. Honest gaps where you have no data — no guessing.</p>
-  </div>
-  <div class="feature">
-    <div class="feature__icon" aria-hidden="true">🏠</div>
-    <h3>Household sharing</h3>
-    <p>Invite housemates to share one footprint. One set of data, everyone can see it.</p>
+{# ── Example numbers ───────────────────────────────────────────────────────── #}
+<div class="landing-section--alt">
+  <div class="landing-section">
+    <h2>What a typical UK household looks like</h2>
+    <p class="section-intro">A 3-bedroom house with gas heating, one petrol car, occasional flights and a medium-meat diet.</p>
+    <div class="example-numbers">
+      <div class="example-number">
+        <div class="example-number__slice">Home energy</div>
+        <div class="example-number__kg">3,100</div>
+        <div class="example-number__unit">kg CO&#x2082;e / year</div>
+      </div>
+      <div class="example-number">
+        <div class="example-number__slice">Transport</div>
+        <div class="example-number__kg">2,400</div>
+        <div class="example-number__unit">kg CO&#x2082;e / year</div>
+      </div>
+      <div class="example-number">
+        <div class="example-number__slice">Flights</div>
+        <div class="example-number__kg">1,200</div>
+        <div class="example-number__unit">kg CO&#x2082;e / year</div>
+      </div>
+      <div class="example-number">
+        <div class="example-number__slice">Food</div>
+        <div class="example-number__kg">2,800</div>
+        <div class="example-number__unit">kg CO&#x2082;e / year</div>
+      </div>
+      <div class="example-number">
+        <div class="example-number__slice">Purchases</div>
+        <div class="example-number__kg">1,500</div>
+        <div class="example-number__unit">kg CO&#x2082;e / year</div>
+      </div>
+      <div class="example-number example-number__total">
+        <div class="example-number__slice">Total</div>
+        <div class="example-number__kg">11,000</div>
+        <div class="example-number__unit">kg CO&#x2082;e / year</div>
+      </div>
+    </div>
+    <p class="section-intro" style="margin-top: 0.75rem; font-size: 0.85rem;">
+      UK average ~11 t CO&#x2082;e/year. The CCC&rsquo;s 2030 target is ~5 t. 1.5&thinsp;&deg;C-compatible is ~2.3 t.
+    </p>
   </div>
 </div>
+
+{# ── How it works ──────────────────────────────────────────────────────────── #}
+<div class="landing-section">
+  <h2>How it works</h2>
+  <p class="section-intro">From first login to a populated dashboard in under 10 minutes.</p>
+  <div class="how-steps">
+    <div class="how-step">
+      <h3>Answer a few quick questions</h3>
+      <p>Heating type, car, diet, flights &mdash; a short wizard creates your first estimate immediately.</p>
+    </div>
+    <div class="how-step">
+      <h3>Replace estimates with real data</h3>
+      <p>Enter your actual meter readings, receipts and travel logs whenever you have them.</p>
+    </div>
+    <div class="how-step">
+      <h3>Watch your footprint change</h3>
+      <p>A monthly trend chart shows what&rsquo;s working. See each slice and drill into any number.</p>
+    </div>
+    <div class="how-step">
+      <h3>Compare to benchmarks</h3>
+      <p>See how you stack up against the UK average, CCC 2030 target, and 1.5&thinsp;&deg;C fair share.</p>
+    </div>
+  </div>
+</div>
+
+{# ── Transparency pitch ─────────────────────────────────────────────────────── #}
+<div class="landing-section--alt">
+  <div class="landing-section">
+    <h2>Transparent by design</h2>
+    <p class="section-intro">Every number on your dashboard links to the inputs that made it and the cited factors behind it.</p>
+    <ul class="trust-list">
+      <li>
+        <span class="trust-list__icon" aria-hidden="true">&#128220;</span>
+        <span><strong>DESNZ emission factors</strong> &mdash; the same UK government figures used in official greenhouse-gas reporting. Source cited on every result.</span>
+      </li>
+      <li>
+        <span class="trust-list__icon" aria-hidden="true">&#128270;</span>
+        <span><strong>Pinned calculations</strong> &mdash; your historical results are locked to the factors in use when you entered them. New factor releases never silently change old data.</span>
+      </li>
+      <li>
+        <span class="trust-list__icon" aria-hidden="true">&#128196;</span>
+        <span><strong>Browse the catalogue</strong> &mdash; every formula and every emission factor is <a href="{% url 'catalogue:browse' %}">publicly readable</a> without signing up.</span>
+      </li>
+      <li>
+        <span class="trust-list__icon" aria-hidden="true">&#127968;</span>
+        <span><strong>Household data stays yours</strong> &mdash; no selling, no ads. Invite housemates to share one account.</span>
+      </li>
+    </ul>
+  </div>
+</div>
+
+{# ── CTA ───────────────────────────────────────────────────────────────────── #}
+{% if not user.is_authenticated %}
+<div class="landing-cta-section">
+  <h2>Ready to find out where you stand?</h2>
+  <p>Takes about 10 minutes to get a full estimate. No payment required.</p>
+  <a class="btn btn--primary" href="{% url 'account_signup' %}">Create a free account</a>
+</div>
+{% endif %}
+
 {% endblock %}

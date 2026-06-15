@@ -14,7 +14,7 @@
       <strong>{{ current_estimate.result_kg|floatformat:0 }} kg</strong>
       <span class="unit">CO&#x2082;e / year</span>
     </p>
-    <p class="meta">As of {{ current_estimate.effective_from }} &middot; {{ current_estimate.mode|default:"—" }} mode</p>
+    <p class="meta">As of {{ current_estimate.effective_from }} &middot; {{ current_estimate.mode|default:"—" }} mode{% if current_estimate.is_estimate %} <span class="badge-estimate">estimate</span>{% endif %}</p>
   </section>
   {% endif %}
 
@@ -100,7 +100,7 @@
       <tbody>
         {% for est in history %}
         <tr>
-          <td>{{ est.effective_from }}</td>
+          <td>{{ est.effective_from }}{% if est.is_estimate %}<span class="badge-estimate">estimate</span>{% endif %}</td>
           <td>{{ est.mode|default:"—" }}</td>
           <td class="num">{{ est.result_kg|floatformat:0 }}</td>
           <td><a class="btn btn--sm" href="{% url 'entries:breakdown_estimate' est.id %}">Details</a></td>

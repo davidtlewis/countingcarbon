@@ -45,6 +45,7 @@ class PeriodicEntry(models.Model):
     pinned_factors = models.JSONField()
     result_kg = models.DecimalField(max_digits=12, decimal_places=4)
     formula_version = models.CharField(max_length=500)
+    is_estimate = models.BooleanField(default=False)
     logged_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -101,6 +102,7 @@ class AnnualEstimate(models.Model):
     result_kg = models.DecimalField(max_digits=12, decimal_places=4)
     formula_version = models.CharField(max_length=500)
     mode = models.CharField(max_length=20, blank=True)  # 'quick'/'detailed' for food
+    is_estimate = models.BooleanField(default=False)
     logged_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -131,6 +133,7 @@ class EventEntry(models.Model):
     pinned_factors = models.JSONField()
     result_kg = models.DecimalField(max_digits=12, decimal_places=4)
     formula_version = models.CharField(max_length=200)
+    is_estimate = models.BooleanField(default=False)
     logged_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,

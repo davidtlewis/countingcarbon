@@ -1,6 +1,6 @@
 {% load entries_extras %}
 <tr id="entry-{{ entry.id }}"{% if saved %} class="entry-row--saved"{% endif %}>
-  <td>{{ entry.period_label }}</td>
+  <td>{{ entry.period_label }}{% if entry.is_estimate %}<span class="badge-estimate">estimate</span>{% endif %}</td>
   {% for li in slice.line_items.all %}
   {% for field in li.input_fields.all %}
   <td class="num">{{ entry.inputs|dict_get:li.key|dict_get:field.name|default:"—" }}</td>

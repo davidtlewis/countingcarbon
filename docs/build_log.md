@@ -1,6 +1,6 @@
 # CountingCarbon — Build Log
 
-Generated: June 2026. Covers T1–T19 (Phase 1 and Phase 2 complete, Phase 3 in progress).
+Generated: June 2026. Covers T1–T19 (Phase 1 and Phase 2 complete, Phase 3 in progress), T21 and T24 (Phase 4 started).
 
 ---
 
@@ -1139,6 +1139,93 @@ templates/entries/partials/food_section.html      Details link in history table
 templates/entries/partials/purchases_section.html Details link in history table
 templates/dashboard/index.html   Slice labels are now links (tap 1)
 static/css/main.css              breakdown + catalogue styles
+```
+
+---
+
+## T21 — Onboarding wizard with quick-estimate defaults ✅
+
+### What was built
+
+A 5-step onboarding wizard that runs immediately after household creation and populates the dashboard with `is_estimate=True` entries. The user can skip individual steps or the whole wizard and add real data later.
+
+**`is_estimate` field** added to all three entry models — `PeriodicEntry`, `EventEntry`, and `AnnualEstimate` — as a `BooleanField(default=False)`. Migration `entries/0005_add_is_estimate.py`. Estimate badges (amber "ESTIMATE" pill, `.badge-estimate`) are rendered on entry rows across all slice pages; when a user enters real data, they create a fresh entry without the flag.
+
+**Wizard flow** (`accounts/wizard.py`): 5 steps at `/onboarding/wizard/<step>/`, URL name `onboarding_wizard`.
+
+| Step | Question proxy | Entry created |
+|---|---|---|
+| 1 | Heating type + home size | `PeriodicEntry` for `home_energy` (monthly, annual÷12) |
+| 2 | Car fuel + annual mileage bracket | `PeriodicEntry` for `transport` (monthly, annual÷12) |
+| 3 | Short-haul count + long-haul count | `EventEntry` × N for `flights` (1,100 km / 8,000 km representative) |
+| 4 | Diet type + number of people | `AnnualEstimate` for `food` (quick mode) |
+| 5 | Spending level (low/typical/high) | `AnnualEstimate` for `purchases` |
+
+All entries go through `catalogue_calculate()` with today's date, so they use current published factors and formula versions. Flights clear any prior estimate records before creating new ones (idempotent re-entry).
+
+**Proxy-to-input mappings** are defined as constants in `wizard.py` (UK-typical annual values from government consumption data); division by 12 yields monthly periodic figures.
+
+**Onboarding redirect**: `accounts/views.py::onboarding()` now redirects to `onboarding_wizard` step 1 after household creation instead of to household settings. Household settings are still reachable via the nav.
+
+### Key design decisions
+
+- Each step creates entries immediately on POST (not held in session until the end) so partial completion still yields a populated dashboard.
+- "Skip this step" advances without creating an entry; "Skip all" (step 1 only) goes straight to the dashboard.
+- `update_or_create` on periodic entries means re-running the wizard (e.g. after back-navigation) doesn't duplicate rows.
+- `is_estimate` is never cleared automatically — the user replaces an estimate by entering real data on the slice page, which creates a new `PeriodicEntry`/`AnnualEstimate` without the flag. For periodic slices the unique constraint on `(household, slice_key, period_start)` means adding a real entry for the current month overwrites the estimate.
+
+### Files created / modified
+
+```
+entries/models.py                      is_estimate field on all three entry models
+entries/migrations/0005_add_is_estimate.py  NEW
+accounts/wizard.py                     NEW — wizard view + proxy mapping constants
+accounts/views.py                      onboarding() redirects to wizard after household creation
+accounts/urls.py                       imports wizard_view (for future app-namespaced use)
+countingcarbon/urls.py                 path("onboarding/wizard/<int:step>/", wizard_view, name="onboarding_wizard")
+templates/accounts/onboarding_wizard.html  NEW — 5-step wizard template
+templates/entries/partials/entry_row.html       estimate badge
+templates/entries/partials/flight_row.html      estimate badge
+templates/entries/partials/food_section.html    estimate badge on current + history
+templates/entries/partials/purchases_section.html  estimate badge on current + history
+static/css/main.css                    .wizard*, .badge-estimate, .btn--ghost styles
+```
+
+---
+
+## T24 — Public front door ✅
+
+### What was built
+
+A complete redesign of the landing page and SEO/meta foundations for the public-facing site.
+
+**Landing page** (`templates/hello.html`) — four sections:
+1. **Hero** — dark green gradient with value proposition headline, tagline, and sign-up / sign-in CTAs
+2. **Example numbers** — static grid showing a typical UK household breakdown (home energy 3,100 / transport 2,400 / flights 1,200 / food 2,800 / purchases 1,500 / total 11,000 kg CO₂e) with UK average, CCC 2030, and 1.5°C fair-share context
+3. **How it works** — 4-step numbered cards (wizard → real data → trend chart → benchmarks)
+4. **Transparency pitch** — trust signals: DESNZ factors, pinned calculations, public catalogue, no ads; repeat CTA at bottom for unauthenticated visitors
+
+**SEO / OG meta** added to `base.html`:
+- `<meta name="description">` with overridable `{% block meta_description %}`
+- `og:title`, `og:description`, `og:type`, `og:site_name` with overridable blocks
+- The landing page overrides both in its `{% block extra_head %}`
+
+**Favicon** — SVG leaf icon (`static/img/favicon.svg`) linked from `base.html` as `<link rel="icon" type="image/svg+xml">`. Scales cleanly at any size; no raster fallback needed for modern browsers.
+
+**Footer** updated: "Emission factors" now links to the catalogue browse page alongside the privacy policy; DESNZ OGL attribution retained.
+
+### Key design decisions
+
+- Example numbers are static (no live query) — they illustrate a realistic UK household and are updated by hand if factors change materially. The catalogue browse page is the authoritative public source.
+- OG meta blocks are defined in `base.html` with sensible defaults so any page that doesn't override them still gets reasonable social-preview text.
+
+### Files created / modified
+
+```
+templates/hello.html               Full redesign — hero, example numbers, how-it-works, transparency, CTA
+templates/base.html                favicon link, meta description + OG blocks, updated footer
+static/img/favicon.svg             NEW — SVG leaf icon
+static/css/main.css                .landing-hero, .how-steps, .example-numbers, .trust-list, .landing-cta-section
 ```
 
 ---

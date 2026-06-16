@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # redeploy.sh — pull latest code and restart CountingCarbon.
-# Run on the server as the app user or root:
-#   sudo -u countingcarbon bash /home/countingcarbon/app/deploy/redeploy.sh
 #
-# Safe to run at any time; gunicorn reloads gracefully after restart.
+# Run from the server as the ubuntu user (no sudo needed):
+#   bash ~/app/deploy/redeploy.sh
+#
+# Safe to run at any time; gunicorn restarts gracefully.
 
 set -euo pipefail
 
@@ -56,7 +57,7 @@ info "Collecting static files"
 run_manage collectstatic --no-input --clear
 ok "Static files collected"
 
-# Reload catalogue only if the seed fixture has changed
+# Reload catalogue only if the seed fixture changed in this pull
 if git -C "${APP_DIR}" diff --name-only "${BEFORE}" "${AFTER}" \
      | grep -q "fixtures/catalogue_seed.json"; then
   info "catalogue_seed.json changed — reloading catalogue"
@@ -73,7 +74,6 @@ else
   sudo systemctl start "${SERVICE}"
 fi
 
-# Wait briefly and confirm it's up
 sleep 2
 systemctl is-active --quiet "${SERVICE}" \
   && ok "Service is running" \

@@ -21,6 +21,8 @@ This guide covers deploying CountingCarbon to a single Ubuntu 24.04 EC2 instance
 
 ## First-time deploy
 
+The app runs as the `ubuntu` user — the default EC2 login. No separate app user is needed.
+
 ### 1. Before you start — update the repo URL
 
 Open `deploy/deploy.sh` and set `REPO_URL` at the top to your GitHub repository:
@@ -57,17 +59,15 @@ The script is interactive — it will prompt you for:
 ### 3. What the script does
 
 1. Updates system packages and installs nginx, PostgreSQL, certbot, uv
-2. Creates a `countingcarbon` system user
-3. Creates the PostgreSQL database and user
-4. Clones the repository
-5. Installs Python dependencies via `uv sync --no-dev`
-6. Writes `/home/countingcarbon/app/.env` (mode 600)
-7. Runs `migrate`, `load_catalogue`, `collectstatic`
-8. Prompts you to create a Django superuser (`createsuperuser`)
-9. Grants the app user passwordless `sudo` for its own systemd service
-10. Installs and starts the `countingcarbon` systemd service
-11. Configures nginx as a reverse proxy
-12. Optionally runs certbot to obtain a Let's Encrypt TLS certificate
+2. Creates the PostgreSQL database and `countingcarbon` DB user
+3. Clones the repository to `/home/ubuntu/app`
+4. Installs Python dependencies via `uv sync --no-dev`
+5. Writes `/home/ubuntu/app/.env` (mode 600)
+6. Runs `migrate`, `load_catalogue`, `collectstatic`
+7. Prompts you to create a Django superuser (`createsuperuser`)
+8. Installs and starts the `countingcarbon` systemd service (runs as `ubuntu`)
+9. Configures nginx as a reverse proxy
+10. Optionally runs certbot to obtain a Let's Encrypt TLS certificate
 
 ### 4. Verify the deployment
 
@@ -94,12 +94,6 @@ You should see a `200 OK` with a `Strict-Transport-Security` header.
 After merging changes to `main`, SSH to the server and run:
 
 ```bash
-sudo -u countingcarbon bash /home/countingcarbon/app/deploy/redeploy.sh
-```
-
-Or, if you're already the `countingcarbon` user:
-
-```bash
 bash ~/app/deploy/redeploy.sh
 ```
 
@@ -118,10 +112,10 @@ The script exits non-zero on any failure so you know immediately if something we
 
 ## Environment file
 
-The `.env` file lives at `/home/countingcarbon/app/.env` and is sourced by systemd. It is mode 600 (readable only by the app user). To update a value:
+The `.env` file lives at `/home/ubuntu/app/.env` and is sourced by systemd. It is mode 600. To update a value:
 
 ```bash
-sudo -u countingcarbon nano /home/countingcarbon/app/.env
+nano ~/app/.env
 sudo systemctl restart countingcarbon
 ```
 
@@ -164,18 +158,14 @@ sudo systemctl stop countingcarbon
 sudo systemctl start countingcarbon
 
 # Open a Django shell
-sudo -u countingcarbon bash -c "
-  set -a; source /home/countingcarbon/app/.env; set +a
-  cd /home/countingcarbon/app
-  uv run python manage.py shell
-"
+cd ~/app
+set -a; source .env; set +a
+uv run python manage.py shell
 
 # Run a management command
-sudo -u countingcarbon bash -c "
-  set -a; source /home/countingcarbon/app/.env; set +a
-  cd /home/countingcarbon/app
-  uv run python manage.py <command>
-"
+cd ~/app
+set -a; source .env; set +a
+uv run python manage.py <command>
 
 # Check certbot auto-renewal
 sudo certbot renew --dry-run
@@ -189,7 +179,7 @@ sudo certbot renew --dry-run
 Internet
    │  HTTPS :443
    ▼
-nginx  ──── /static/ ──► /home/countingcarbon/app/staticfiles/
+nginx  ──── /static/ ──► /home/ubuntu/app/staticfiles/
    │
    │  Unix socket  /run/countingcarbon.sock
    ▼

@@ -1,15 +1,18 @@
 #!/usr/bin/env bash
 # deploy.sh — first-time setup of CountingCarbon on a fresh Ubuntu 24.04 EC2 instance.
-# Run as root (or via sudo) on the server:
+#
+# Run as the ubuntu user (the default EC2 login) using sudo:
 #   sudo bash deploy.sh
+#
+# The app runs as 'ubuntu' — no separate app user is created.
 #
 # What it does:
 #   1. Installs system packages (nginx, postgresql, certbot, uv)
-#   2. Creates the 'countingcarbon' system user
-#   3. Clones the repo and installs Python deps
+#   2. Clones the repo to /home/ubuntu/app
+#   3. Installs Python deps
 #   4. Creates the .env file interactively
 #   5. Runs migrations, seeds the catalogue, collects static files
-#   6. Installs the systemd service
+#   6. Installs the systemd service (runs as ubuntu)
 #   7. Configures nginx
 #   8. Optionally obtains a Let's Encrypt TLS certificate
 
@@ -17,11 +20,10 @@ set -euo pipefail
 
 # ── Config ────────────────────────────────────────────────────────────────────
 
-APP_USER="countingcarbon"
-APP_DIR="/home/${APP_USER}/app"
+APP_USER="ubuntu"
+APP_DIR="/home/ubuntu/app"
 REPO_URL="https://github.com/davidlewis/countingcarbon.git"   # ← update this
 DOMAIN=""          # set below interactively
-ENABLE_TLS=false
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -29,16 +31,12 @@ info()  { echo -e "\n\033[1;32m▶ $*\033[0m"; }
 warn()  { echo -e "\033[1;33m⚠  $*\033[0m"; }
 prompt(){ read -rp "  $1: " "$2"; }
 
-require_root() {
-  if [[ $EUID -ne 0 ]]; then
-    echo "Run this script as root: sudo bash deploy.sh"
-    exit 1
-  fi
-}
+if [[ $EUID -ne 0 ]]; then
+  echo "Run this script as root: sudo bash deploy.sh"
+  exit 1
+fi
 
 # ── 1. System packages ────────────────────────────────────────────────────────
-
-require_root
 
 info "Updating system packages"
 apt-get update -qq
@@ -50,37 +48,32 @@ apt-get install -y -qq \
   git curl
 
 info "Installing uv"
-if ! command -v uv &>/dev/null; then
-  curl -LsSf https://astral.sh/uv/install.sh | sh
-  # Make uv available system-wide
-  ln -sf /root/.local/bin/uv /usr/local/bin/uv
+if ! sudo -u "${APP_USER}" bash -c 'command -v uv &>/dev/null'; then
+  sudo -u "${APP_USER}" bash -c \
+    'curl -LsSf https://astral.sh/uv/install.sh | sh'
 fi
+# Symlink so uv is on PATH when running via sudo
+UV_BIN="$(sudo -u "${APP_USER}" bash -c 'echo $HOME')/.local/bin/uv"
+ln -sf "${UV_BIN}" /usr/local/bin/uv
 
-# ── 2. App user ───────────────────────────────────────────────────────────────
-
-info "Creating app user '${APP_USER}'"
-if ! id "${APP_USER}" &>/dev/null; then
-  useradd -m -s /bin/bash "${APP_USER}"
-fi
-
-# ── 3. PostgreSQL ─────────────────────────────────────────────────────────────
+# ── 2. PostgreSQL ─────────────────────────────────────────────────────────────
 
 info "Setting up PostgreSQL database"
-prompt "Database password for user '${APP_USER}'" DB_PASS
+prompt "Database password for the 'countingcarbon' DB user" DB_PASS
 
 sudo -u postgres psql -tc \
-  "SELECT 1 FROM pg_roles WHERE rolname='${APP_USER}'" | grep -q 1 || \
+  "SELECT 1 FROM pg_roles WHERE rolname='countingcarbon'" | grep -q 1 || \
   sudo -u postgres psql -c \
-    "CREATE USER ${APP_USER} WITH PASSWORD '${DB_PASS}';"
+    "CREATE USER countingcarbon WITH PASSWORD '${DB_PASS}';"
 
 sudo -u postgres psql -tc \
-  "SELECT 1 FROM pg_database WHERE datname='${APP_USER}'" | grep -q 1 || \
+  "SELECT 1 FROM pg_database WHERE datname='countingcarbon'" | grep -q 1 || \
   sudo -u postgres psql -c \
-    "CREATE DATABASE ${APP_USER} OWNER ${APP_USER};"
+    "CREATE DATABASE countingcarbon OWNER countingcarbon;"
 
-DATABASE_URL="postgres://${APP_USER}:${DB_PASS}@localhost/${APP_USER}"
+DATABASE_URL="postgres://countingcarbon:${DB_PASS}@localhost/countingcarbon"
 
-# ── 4. Clone repo ─────────────────────────────────────────────────────────────
+# ── 3. Clone repo ─────────────────────────────────────────────────────────────
 
 info "Cloning repository to ${APP_DIR}"
 prompt "Git repository URL (press Enter for ${REPO_URL})" USER_REPO
@@ -93,12 +86,12 @@ else
   sudo -u "${APP_USER}" git clone "${REPO_URL}" "${APP_DIR}"
 fi
 
-# ── 5. Python deps ────────────────────────────────────────────────────────────
+# ── 4. Python deps ────────────────────────────────────────────────────────────
 
 info "Installing Python dependencies"
 sudo -u "${APP_USER}" bash -c "cd ${APP_DIR} && uv sync --no-dev"
 
-# ── 6. Environment file ───────────────────────────────────────────────────────
+# ── 5. Environment file ───────────────────────────────────────────────────────
 
 info "Configuring environment"
 prompt "Domain name (e.g. countingcarbon.dtlewis.com)" DOMAIN
@@ -128,7 +121,7 @@ EOF
 chown "${APP_USER}:${APP_USER}" "${ENV_FILE}"
 chmod 600 "${ENV_FILE}"
 
-# ── 7. Django setup ───────────────────────────────────────────────────────────
+# ── 6. Django setup ───────────────────────────────────────────────────────────
 
 info "Running migrations"
 sudo -u "${APP_USER}" bash -c "
@@ -146,16 +139,7 @@ sudo -u "${APP_USER}" bash -c "
   uv run python manage.py createsuperuser
 "
 
-# ── 8. Sudoers for service restart ───────────────────────────────────────────
-
-info "Allowing '${APP_USER}' to restart its own service without a password"
-cat > /etc/sudoers.d/countingcarbon <<EOF
-# Allow the countingcarbon app user to restart/start/stop its own service
-${APP_USER} ALL=(ALL) NOPASSWD: /bin/systemctl restart countingcarbon, /bin/systemctl start countingcarbon, /bin/systemctl stop countingcarbon
-EOF
-chmod 440 /etc/sudoers.d/countingcarbon
-
-# ── 8b. Systemd service ───────────────────────────────────────────────────────
+# ── 7. Systemd service ────────────────────────────────────────────────────────
 
 info "Installing systemd service"
 cat > /etc/systemd/system/countingcarbon.service <<EOF
@@ -187,7 +171,7 @@ systemctl daemon-reload
 systemctl enable countingcarbon
 systemctl restart countingcarbon
 
-# ── 9. Nginx ──────────────────────────────────────────────────────────────────
+# ── 8. Nginx ──────────────────────────────────────────────────────────────────
 
 info "Configuring nginx"
 cat > /etc/nginx/sites-available/countingcarbon <<EOF
@@ -195,7 +179,6 @@ server {
     listen 80;
     server_name ${DOMAIN};
 
-    # Serve static files directly (whitenoise also handles this, belt-and-braces)
     location /static/ {
         alias ${APP_DIR}/staticfiles/;
         expires 1y;
@@ -220,7 +203,7 @@ rm -f /etc/nginx/sites-enabled/default
 nginx -t
 systemctl reload nginx
 
-# ── 10. TLS ───────────────────────────────────────────────────────────────────
+# ── 9. TLS ────────────────────────────────────────────────────────────────────
 
 read -rp "  Obtain a Let's Encrypt certificate for ${DOMAIN} now? [Y/n]: " TLS_ANSWER
 if [[ "${TLS_ANSWER,,}" != "n" ]]; then
@@ -237,8 +220,8 @@ fi
 
 info "Deployment complete!"
 echo ""
-echo "  App:       https://${DOMAIN}"
-echo "  Admin:     https://${DOMAIN}/admin/"
-echo "  Logs:      sudo journalctl -u countingcarbon -f"
-echo "  Redeploy:  sudo -u ${APP_USER} bash ${APP_DIR}/deploy/redeploy.sh"
+echo "  App:      https://${DOMAIN}"
+echo "  Admin:    https://${DOMAIN}/admin/"
+echo "  Logs:     sudo journalctl -u countingcarbon -f"
+echo "  Redeploy: bash ${APP_DIR}/deploy/redeploy.sh"
 echo ""

@@ -100,9 +100,7 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 # django-allauth
-# Rate limiting disabled: allauth can't determine client IP behind nginx proxy.
-# Re-enable once a proper cache backend (e.g. Redis) and IP header are configured.
-ACCOUNT_RATE_LIMITS = {}
+ACCOUNT_ADAPTER = "accounts.adapters.AccountAdapter"
 ACCOUNT_LOGIN_METHODS = {"email"}
 ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*", "password2*"]
 ACCOUNT_EMAIL_VERIFICATION = "mandatory"

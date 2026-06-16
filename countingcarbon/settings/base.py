@@ -103,7 +103,9 @@ AUTHENTICATION_BACKENDS = [
 ACCOUNT_ADAPTER = "accounts.adapters.AccountAdapter"
 ACCOUNT_LOGIN_METHODS = {"email"}
 ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*", "password2*"]
-ACCOUNT_EMAIL_VERIFICATION = "mandatory"
+ACCOUNT_EMAIL_VERIFICATION = (
+    "mandatory"  # override via env: ACCOUNT_EMAIL_VERIFICATION=none
+)
 ACCOUNT_UNIQUE_EMAIL = True
 ACCOUNT_EMAIL_SUBJECT_PREFIX = "[CountingCarbon] "
 

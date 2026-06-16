@@ -181,7 +181,7 @@ Internet
    ▼
 nginx  ──── /static/ ──► /home/ubuntu/app/staticfiles/
    │
-   │  Unix socket  /run/countingcarbon.sock
+   │  Unix socket  /run/countingcarbon/gunicorn.sock
    ▼
 gunicorn  (2 workers × 2 threads)
    │

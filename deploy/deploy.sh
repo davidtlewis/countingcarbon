@@ -166,7 +166,7 @@ ExecStart=${APP_DIR}/.venv/bin/gunicorn \\
     countingcarbon.wsgi \\
     --workers 2 \\
     --threads 2 \\
-    --bind unix:/run/countingcarbon.sock \\
+    --bind unix:/run/countingcarbon/gunicorn.sock \\
     --access-logfile - \\
     --error-logfile -
 RuntimeDirectory=countingcarbon
@@ -197,7 +197,7 @@ server {
     }
 
     location / {
-        proxy_pass http://unix:/run/countingcarbon.sock;
+        proxy_pass http://unix:/run/countingcarbon/gunicorn.sock;
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;

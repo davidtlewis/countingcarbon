@@ -29,7 +29,17 @@ DOMAIN=""          # set below interactively
 
 info()  { echo -e "\n\033[1;32m▶ $*\033[0m"; }
 warn()  { echo -e "\033[1;33m⚠  $*\033[0m"; }
-prompt(){ read -rp "  $1: " "$2"; }
+prompt() {
+  local __var="$2"
+  local __val=""
+  while [[ -z "${__val}" ]]; do
+    read -rp "  $1: " __val </dev/tty
+    __val="${__val//[$'\r\n']/}"   # strip carriage returns / newlines
+    __val="${__val## }"; __val="${__val%% }"  # strip leading/trailing spaces
+    [[ -z "${__val}" ]] && echo "  (value required, please try again)"
+  done
+  printf -v "${__var}" '%s' "${__val}"
+}
 
 if [[ $EUID -ne 0 ]]; then
   echo "Run this script as root: sudo bash deploy.sh"

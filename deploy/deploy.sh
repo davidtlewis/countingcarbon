@@ -66,6 +66,9 @@ fi
 UV_BIN="$(sudo -u "${APP_USER}" bash -c 'echo $HOME')/.local/bin/uv"
 ln -sf "${UV_BIN}" /usr/local/bin/uv
 
+# Allow nginx (www-data) to traverse the ubuntu home directory to reach staticfiles
+chmod 755 /home/ubuntu
+
 # ── 2. PostgreSQL ─────────────────────────────────────────────────────────────
 
 info "Setting up PostgreSQL database"

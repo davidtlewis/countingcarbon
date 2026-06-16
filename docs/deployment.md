@@ -211,10 +211,10 @@ sudo journalctl -u countingcarbon -n 50
 **Static files returning 404**
 Run `collectstatic` again and check the nginx `alias` path matches `STATIC_ROOT`.
 ```bash
-sudo -u countingcarbon bash -c "
-  set -a; source /home/countingcarbon/app/.env; set +a
-  cd /home/countingcarbon/app && uv run python manage.py collectstatic --no-input
-"
+cd ~/app
+set -a; source .env; set +a
+uv run python manage.py collectstatic --no-input
+```
 
 **Email not arriving**
 Check SMTP credentials in `.env`. Test from the Django shell:

@@ -100,9 +100,9 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 # django-allauth
-ACCOUNT_CLIENT_IP_HEADER = (
-    "HTTP_X_REAL_IP"  # set by nginx: proxy_set_header X-Real-IP $remote_addr
-)
+# Rate limiting disabled: allauth can't determine client IP behind nginx proxy.
+# Re-enable once a proper cache backend (e.g. Redis) and IP header are configured.
+ACCOUNT_RATE_LIMITS = {}
 ACCOUNT_LOGIN_METHODS = {"email"}
 ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*", "password2*"]
 ACCOUNT_EMAIL_VERIFICATION = "mandatory"

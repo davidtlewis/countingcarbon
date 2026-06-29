@@ -89,6 +89,33 @@ def _get_cadence_choices():
     return HouseholdSlicePreference._meta.get_field("cadence").choices
 
 
+def _delete_overlapping_estimates(household, slice_key, period_start, cadence):
+    """Delete is_estimate entries whose period overlaps the new entry's period.
+
+    Returns the number of estimates deleted.
+    """
+    if cadence == "monthly":
+        y, m = period_start.year, period_start.month
+        period_end = date(y + (m // 12), m % 12 + 1, 1)
+    elif cadence == "quarterly":
+        m = period_start.month + 3
+        period_end = date(period_start.year + (m > 12), (m - 1) % 12 + 1, 1)
+    else:
+        period_end = date(period_start.year + 1, 1, 1)
+
+    candidates = PeriodicEntry.objects.filter(
+        household=household, slice_key=slice_key, is_estimate=True
+    )
+    to_delete = [
+        est.id
+        for est in candidates
+        if est.period_start < period_end and est.period_end > period_start
+    ]
+    if not to_delete:
+        return 0
+    return PeriodicEntry.objects.filter(id__in=to_delete).delete()[0]
+
+
 # ── Generic periodic slice page ───────────────────────────────────────────────
 
 
@@ -103,6 +130,7 @@ def _periodic_page_context(household, slice_key, urls):
         "entries": entries,
         "preference": preference,
         "cadence_choices": _get_cadence_choices(),
+        "form_period_start": date.today(),
         **urls,
     }
 
@@ -185,6 +213,9 @@ def _periodic_add(request, slice_key, urls):
         else:
             try:
                 result = catalogue_calculate(slice_obj, inputs, period_start)
+                replaced = _delete_overlapping_estimates(
+                    household, slice_key, period_start, cadence
+                )
                 entry = PeriodicEntry.objects.create(
                     household=household,
                     slice_key=slice_key,
@@ -208,6 +239,7 @@ def _periodic_add(request, slice_key, urls):
                         "preference": preference,
                         "cadence_choices": _get_cadence_choices(),
                         "saved_entry": entry,
+                        "replaced_estimates": replaced,
                         **urls,
                     },
                 )

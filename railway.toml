@@ -1,8 +1,0 @@
-[build]
-builder = "nixpacks"
-
-[deploy]
-startCommand = "gunicorn countingcarbon.wsgi --workers 2 --threads 2 --log-file -"
-healthcheckPath = "/"
-healthcheckTimeout = 30
-restartPolicyType = "on_failure"

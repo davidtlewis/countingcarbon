@@ -6,6 +6,11 @@
     Saved &mdash; {{ saved_entry.period_label }}: <strong>{{ saved_entry.result_kg|floatformat:2 }} kg CO&#x2082;e</strong>
   </div>
   {% endif %}
+  {% if replaced_estimates %}
+  <div class="save-flash save-flash--info">
+    {{ replaced_estimates }} estimated entr{{ replaced_estimates|pluralize:"y,ies" }} replaced with your actual data.
+  </div>
+  {% endif %}
 
   {# ── Add new entry form ─────────────────────────────────────────────── #}
   <section class="card">

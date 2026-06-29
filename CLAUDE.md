@@ -83,13 +83,18 @@ Project-wide templates live in `templates/` (not inside app directories). Per-ap
 
 HTMX 2.0.4 and Chart.js 4.4.9 are loaded from CDN in `base.html`. Static CSS lives in `static/css/main.css`.
 
-### Deployment (Railway)
+### Deployment (AWS EC2)
 
-`railway.toml` uses Nixpacks. `Procfile` `release` phase runs `migrate` + `collectstatic` on every deploy. `wsgi.py` defaults to `countingcarbon.settings.prod`. Required env vars: `SECRET_KEY`, `DATABASE_URL` (auto-injected by Railway Postgres plugin), optional `ALLOWED_HOSTS`.
+Hosted on an Ubuntu 24.04 EC2 instance. Stack: nginx → gunicorn (unix socket) → Django, with PostgreSQL on the same machine and Let's Encrypt TLS.
+
+- `deploy/deploy.sh` — first-time setup on a fresh EC2 instance (installs packages, clones repo, creates `.env`, configures systemd + nginx + certbot)
+- `deploy/redeploy.sh` — pulls latest code, syncs deps, runs migrations, restarts the `countingcarbon` systemd service
+- `Procfile` — used locally or for reference; the systemd service runs gunicorn directly
+- `wsgi.py` defaults to `countingcarbon.settings.prod`; secrets are read from `/home/ubuntu/app/.env`
 
 ### Phase 1 implementation status
 
-- T1 ✅ Scaffold (Django 6, uv, settings split, HTMX/Chart.js, Railway config, ruff)
+- T1 ✅ Scaffold (Django 6, uv, settings split, HTMX/Chart.js, EC2 deploy scripts, ruff)
 - T2 ✅ Accounts (allauth, registration, email verify, password reset, account deletion)
 - T3 ✅ Households & invitations
 - T4 ✅ Hard-coded Home Energy slice (HTMX entry form, inline edit, cadence preference)

@@ -52,6 +52,7 @@
         <li><a href="{% url 'catalogue:browse' %}"{% if '/catalogue/' in request.path %} aria-current="page"{% endif %}>Catalogue</a></li>
         <li><a href="{% url 'accounts:household' %}"{% if '/accounts/household' in request.path %} aria-current="page"{% endif %}>Household</a></li>
         <li><a href="{% url 'accounts:account' %}"{% if request.path == '/accounts/account/' %} aria-current="page"{% endif %}>Account</a></li>
+        <li><a href="{% url 'account_logout' %}">Sign out</a></li>
         {% else %}
         <li><a href="{% url 'account_login' %}"{% if request.path == '/accounts/login/' %} aria-current="page"{% endif %}>Sign in</a></li>
         <li><a href="{% url 'account_signup' %}">Register</a></li>

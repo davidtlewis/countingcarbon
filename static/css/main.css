@@ -456,6 +456,11 @@ p.meta { font-size: 0.82rem; color: var(--text-muted); margin: 0; }
   font-size: 0.95rem;
 }
 
+.save-flash--info {
+  background: #e8f4fd;
+  border-left-color: #4a90d9;
+}
+
 /* Small button variant */
 .btn--sm { padding: 0.3rem 0.75rem; font-size: 0.82rem; min-height: 36px; }
 

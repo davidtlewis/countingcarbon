@@ -1230,6 +1230,45 @@ static/css/main.css                .landing-hero, .how-steps, .example-numbers, 
 
 ---
 
+## UX fixes — entry forms & dashboard (2026-06-29)
+
+### Year picker defaulting to current year
+
+Period year inputs on `/entries/home-energy/` and `/entries/transport/` rendered empty on first load because `form_period_start` was not included in the initial page context.
+
+**Fix:** `_periodic_page_context` now includes `"form_period_start": date.today()` so year (and month) fields pre-fill with the current date for new entries.
+
+### Auto-replace estimated entries with real data
+
+The onboarding wizard seeds estimated `PeriodicEntry` rows (`is_estimate=True`). When a user later enters actual data for an overlapping period the unique constraint would previously block the save or show an error.
+
+**Fix:** New helper `_delete_overlapping_estimates` in `entries/views.py` — called from `_periodic_add` before the `create` — fetches all `is_estimate=True` entries for the household/slice and deletes any whose period overlaps the new entry (using the existing `period_end` property). Overlap detection handles cadence mismatches (e.g. an annual real entry removing multiple monthly estimates). A blue info flash *"N estimated entries replaced with your actual data."* is shown when estimates are cleared. Applies to all periodic slices (home energy, transport).
+
+**Files changed:**
+```
+entries/views.py                                _delete_overlapping_estimates helper; called in _periodic_add
+templates/entries/partials/entries_section.html  replaced_estimates info flash
+static/css/main.css                              .save-flash--info variant (blue)
+```
+
+### Flights added to monthly trend chart
+
+The dashboard trend chart previously excluded flights with the note *"Flights, food and purchases are annualised estimates not shown here."* This was inaccurate — flights are `EventEntry` records with individual dates, not estimates.
+
+Flights are now included as a **12-month rolling average** series (total flight kg in the 12 months ending at month M, divided by 12). This smooths per-trip spikes and stays consistent with the trailing-12-month figure used for the headline annualised total.
+
+**New helper:** `_build_flights_chart_series` aggregates `EventEntry` by calendar month, then walks the timeline computing the rolling window. `_prev_month` utility handles month arithmetic.
+
+The flights series is merged into the existing multi-slice alignment logic in `chart_data` alongside home energy and transport. The chart note was updated to reflect the rolling-average approach.
+
+**Files changed:**
+```
+dashboard/views.py          _prev_month, _build_flights_chart_series; chart_data updated
+templates/dashboard/index.html  updated chart note
+```
+
+---
+
 ## Running the project
 
 ```bash

@@ -1,3 +1,4 @@
+from collections import defaultdict
 from datetime import date, timedelta
 from decimal import Decimal
 
@@ -56,6 +57,43 @@ def _latest_annual_estimate(household, slice_key) -> Decimal | None:
         .first()
     )
     return est.result_kg if est else None
+
+
+def _prev_month(d: date, n: int) -> date:
+    """Return the date n calendar months before d (first of that month)."""
+    total = d.year * 12 + d.month - 1 - n
+    return date(total // 12, total % 12 + 1, 1)
+
+
+def _build_flights_chart_series(household, today=None) -> dict | None:
+    """Trailing 12-month rolling average of flight emissions, plotted monthly.
+
+    For each month M, sums all flights in the 12 months ending at M and
+    divides by 12. This smooths per-flight spikes and stays consistent with
+    the headline _flights_trailing_12m figure on the dashboard.
+    """
+    if today is None:
+        today = date.today()
+    events = list(EventEntry.objects.filter(household=household, slice_key="flights"))
+    if not events:
+        return None
+
+    monthly: dict[date, Decimal] = defaultdict(Decimal)
+    for e in events:
+        monthly[date(e.event_date.year, e.event_date.month, 1)] += e.result_kg
+
+    current_month = date(today.year, today.month, 1)
+    earliest = min(monthly)
+    labels, data = [], []
+    m = earliest
+    while m <= current_month:
+        window_start = _prev_month(m, 11)
+        total = sum(v for k, v in monthly.items() if window_start <= k <= m)
+        labels.append(m.strftime("%b %Y"))
+        data.append(float(round(total / 12, 2)))
+        next_m = m.month + 1
+        m = date(m.year + (next_m > 12), (next_m - 1) % 12 + 1, 1)
+    return {"labels": labels, "data": data}
 
 
 @login_required
@@ -166,31 +204,36 @@ def index(request):
 def chart_data(request):
     household = _get_household(request)
     members = household.member_count
+    today = date.today()
 
     all_periodic = PeriodicEntry.objects.filter(household=household)
-
-    # Determine which periodic slice keys exist
     periodic_slice_keys = list(
         all_periodic.values_list("slice_key", flat=True).distinct()
     )
 
-    if len(periodic_slice_keys) <= 1:
-        # Single slice — return a single household total series
-        series = build_chart_series(all_periodic)
+    per_slice = {
+        sk: build_chart_series(all_periodic.filter(slice_key=sk), today=today)
+        for sk in periodic_slice_keys
+    }
+
+    flights_series = _build_flights_chart_series(household, today=today)
+    if flights_series:
+        per_slice["flights"] = flights_series
+
+    all_slice_keys = list(per_slice.keys())
+
+    if len(all_slice_keys) <= 1:
+        series = (
+            per_slice[all_slice_keys[0]]
+            if all_slice_keys
+            else {"labels": [], "data": []}
+        )
         slice_series = None
     else:
-        # Multiple slices — build per-slice series and align labels
-        per_slice = {}
-        all_labels = None
-        for sk in periodic_slice_keys:
-            s = build_chart_series(all_periodic.filter(slice_key=sk))
-            per_slice[sk] = s
-            if all_labels is None or len(s["labels"]) > len(all_labels):
-                all_labels = s["labels"]
-
-        # Align all series to the same label set (pad shorter ones with None)
+        # Align all series to the longest label set
+        all_labels = max((per_slice[sk]["labels"] for sk in all_slice_keys), key=len)
         label_index = {lbl: i for i, lbl in enumerate(all_labels)}
-        for sk in periodic_slice_keys:
+        for sk in all_slice_keys:
             s = per_slice[sk]
             if s["labels"] == all_labels:
                 continue
@@ -206,7 +249,7 @@ def chart_data(request):
         for i in range(len(all_labels)):
             vals = [
                 per_slice[sk]["data"][i]
-                for sk in periodic_slice_keys
+                for sk in all_slice_keys
                 if per_slice[sk]["data"][i] is not None
             ]
             total_data.append(round(sum(vals), 2) if vals else None)
@@ -218,7 +261,7 @@ def chart_data(request):
                 "label": SLICE_LABELS.get(sk, sk),
                 "color": SLICE_COLORS.get(sk, "#888"),
             }
-            for sk in periodic_slice_keys
+            for sk in all_slice_keys
         }
 
     whole_benchmarks = Benchmark.objects.filter(active=True, slice_key="").order_by(

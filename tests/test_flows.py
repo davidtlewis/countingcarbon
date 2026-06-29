@@ -86,12 +86,10 @@ class TestEntryToDashboard:
         feb_idx = data["labels"].index("Feb 2025")
         assert data["household"][feb_idx] is None
 
-    def test_benchmark_scales_by_member_count(self, auth_client):
+    def test_benchmark_scales_by_household_size(self, auth_client):
         user1 = UserFactory()
-        user2 = UserFactory()
-        household = HouseholdFactory()
+        household = HouseholdFactory(size=2)
         MembershipFactory(user=user1, household=household)
-        MembershipFactory(user=user2, household=household)
         client = auth_client(user1)
 
         client.post(
@@ -100,7 +98,7 @@ class TestEntryToDashboard:
 
         response = client.get("/dashboard/")
         content = response.content.decode()
-        # UK average: 10,000 kg/person × 2 members = 20,000 kg
+        # UK average: 10,000 kg/person × size 2 = 20,000 kg
         assert "20,000" in content or "20000" in content
 
 

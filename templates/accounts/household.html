@@ -19,6 +19,20 @@
 </section>
 
 <section class="card">
+  <h2>Household size</h2>
+  <p>How many people live in your household? This is used to scale benchmark comparisons.</p>
+  <form method="post" action="{% url 'accounts:household_size' %}">
+    {% csrf_token %}
+    <div class="form-group form-inline">
+      <label for="id_size">Number of people</label>
+      <input type="number" id="id_size" name="size" min="1" max="20" style="width: 80px"
+             value="{{ household.size }}">
+      <button class="btn btn--primary" type="submit">Save</button>
+    </div>
+  </form>
+</section>
+
+<section class="card">
   <h2>Invite someone</h2>
   <p>Invite a household member by email. They&rsquo;ll receive a link that expires in 7 days.</p>
   <form method="post" action="{% url 'accounts:household_invite' %}">

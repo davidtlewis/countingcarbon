@@ -121,6 +121,13 @@ def _process_step1(request, household) -> str | None:
     size_idx = int(request.POST.get("size", "1"))
     size_idx = max(0, min(3, size_idx))
 
+    try:
+        household_people = max(1, int(request.POST.get("household_people", "1")))
+    except (ValueError, TypeError):
+        household_people = 1
+    household.size = household_people
+    household.save(update_fields=["size"])
+
     inputs: dict = {
         "gas": {"kwh": "0"},
         "electricity_import": {"kwh": "0"},
@@ -293,9 +300,9 @@ def _process_step4(request, household) -> str | None:
     """Diet. Creates AnnualEstimate for the selected diet type."""
     diet = request.POST.get("diet", "")
     try:
-        people = max(1, int(request.POST.get("people", "1")))
+        people = max(1, int(request.POST.get("people", str(household.size))))
     except (ValueError, TypeError):
-        people = 1
+        people = household.size
 
     diet_keys = {
         "high_meat": "diet_high_meat",
@@ -429,5 +436,6 @@ def wizard_view(request, step: int = 1):
         "step_title": _STEP_TITLES.get(step, ""),
         "error": error,
         "progress_pct": int((step - 1) / TOTAL_STEPS * 100),
+        "household": household,
     }
     return render(request, "accounts/onboarding_wizard.html", context)

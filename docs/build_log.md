@@ -1269,6 +1269,54 @@ templates/dashboard/index.html  updated chart note
 
 ---
 
+## T27 — Household size: separate headcount from membership ✅
+
+### What was built
+
+Added an explicit `size` field to `Household` to represent the number of people living there, decoupled from the number of registered account members. Benchmark comparisons now scale by declared household size, and the food entry form pre-fills from it.
+
+### Changes
+
+**Model & migration**
+- `size = PositiveIntegerField(default=1)` added to `Household`
+- Migration `accounts/0002_household_size.py`
+
+**Dashboard**
+- Both uses of `household.member_count` in `dashboard/views.py` replaced with `household.size` for benchmark scaling. The `member_count` calls in `accounts/views.py` that guard leave/delete logic remain — they correctly count actual account members.
+
+**Household settings page**
+- New `household_size` POST view and `accounts:household_size` URL
+- "Household size" form card added to `templates/accounts/household.html`, editable at any time without re-running onboarding
+
+**Onboarding wizard**
+- Step 1 now includes "How many people live in your household?" — saved to `household.size` immediately when step 1 is submitted
+- Step 4 (diet) pre-fills the "number of people" input from `household.size`; user can still override
+
+**Food entry**
+- `_food_context` passes `household_size` to the template
+- Quick-estimate people field defaults to `household_size` instead of blank
+
+**Tests**
+- `test_benchmark_scales_by_member_count` renamed `test_benchmark_scales_by_household_size` and updated to use `HouseholdFactory(size=2)` with a single member — confirms a 1-member household of declared size 2 scales benchmarks ×2
+
+### Files created / modified
+
+```
+accounts/models.py                                  size field added
+accounts/migrations/0002_household_size.py          NEW
+accounts/views.py                                   household_size view
+accounts/urls.py                                    household/size/ URL
+accounts/wizard.py                                  step 1 saves size; step 4 pre-fills people
+dashboard/views.py                                  member_count → size
+templates/accounts/household.html                   size form card
+templates/accounts/onboarding_wizard.html           size question step 1; pre-fill step 4
+templates/entries/partials/food_section.html        people defaults to household_size
+entries/views.py                                    _food_context passes household_size
+tests/test_flows.py                                 test updated
+```
+
+---
+
 ## Running the project
 
 ```bash

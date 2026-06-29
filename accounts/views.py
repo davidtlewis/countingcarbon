@@ -103,6 +103,27 @@ def household_settings(request):
 
 
 @login_required
+def household_size(request):
+    if request.method != "POST":
+        return redirect("accounts:household")
+    try:
+        household = request.user.membership.household
+    except HouseholdMembership.DoesNotExist:
+        return redirect("onboarding")
+    try:
+        size = int(request.POST.get("size", "1"))
+        if size < 1:
+            raise ValueError
+    except (ValueError, TypeError):
+        messages.error(request, "Please enter a valid household size (1 or more).")
+        return redirect("accounts:household")
+    household.size = size
+    household.save(update_fields=["size"])
+    messages.success(request, "Household size updated.")
+    return redirect("accounts:household")
+
+
+@login_required
 def household_invite(request):
     if request.method != "POST":
         return redirect("accounts:household")

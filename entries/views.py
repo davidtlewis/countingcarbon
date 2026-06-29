@@ -669,6 +669,7 @@ def _food_context(
         "form_errors": form_errors or {},
         "saved": saved,
         "today": date.today().isoformat(),
+        "household_size": household.size,
     }
 
 

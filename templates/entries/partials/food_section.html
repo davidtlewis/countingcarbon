@@ -56,7 +56,7 @@
         <label for="id_people">Number of people</label>
         <input type="number" id="id_people" name="people"
                min="1" step="1" placeholder="1"
-               value="{{ form_inputs.people|default:'' }}">
+               value="{{ form_inputs.people|default:household_size }}">
         {% if form_errors.people %}<p class="form-errors">{{ form_errors.people }}</p>{% endif %}
       </div>
 

@@ -21,6 +21,12 @@
     {% csrf_token %}
 
     {% if step == 1 %}
+    <div class="form-group">
+      <label for="id_household_people">How many people live in your household?</label>
+      <input type="number" id="id_household_people" name="household_people"
+             value="{{ household.size }}" min="1" max="20" style="width: 80px" required>
+    </div>
+
     <fieldset>
       <legend>What is your home&rsquo;s main heating source?</legend>
       <div class="wizard__radio-group">
@@ -122,7 +128,7 @@
     <div class="form-group">
       <label for="id_people">How many people does this cover?</label>
       <p class="wizard__hint">Include everyone in your household who eats this way.</p>
-      <input type="number" id="id_people" name="people" value="1" min="1" max="20" style="width: 80px">
+      <input type="number" id="id_people" name="people" value="{{ household.size }}" min="1" max="20" style="width: 80px">
     </div>
 
     {% elif step == 5 %}

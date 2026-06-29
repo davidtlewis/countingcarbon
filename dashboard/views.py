@@ -99,7 +99,7 @@ def _build_flights_chart_series(household, today=None) -> dict | None:
 @login_required
 def index(request):
     household = _get_household(request)
-    members = household.member_count
+    members = household.size
 
     periodic_entries = PeriodicEntry.objects.filter(household=household).order_by(
         "-period_start"
@@ -203,7 +203,7 @@ def index(request):
 @login_required
 def chart_data(request):
     household = _get_household(request)
-    members = household.member_count
+    members = household.size
     today = date.today()
 
     all_periodic = PeriodicEntry.objects.filter(household=household)

@@ -1,0 +1,58 @@
+# CountingCarbon stack: Gunicorn/Django + Postgres.
+#
+# TLS terminates on the edge nginx host, which proxies to WEB_BIND_IP:WEB_PORT.
+# Postgres is not published outside the compose network.
+#
+#   cp .env.example .env   # then fill in values
+#   docker compose up -d --build
+#   docker compose exec web python manage.py load_catalogue   # first deploy / when the fixture changes
+
+services:
+  web:
+    build: .
+    image: countingcarbon:latest
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: postgres://countingcarbon:${POSTGRES_PASSWORD:?set in .env}@db:5432/countingcarbon
+    ports:
+      # Bind to the LAN interface only; default is loopback so nothing is exposed by accident
+      - "${WEB_BIND_IP:-127.0.0.1}:${WEB_PORT:-8001}:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      # prod settings redirect plain HTTP, so present the request as the proxy would
+      test:
+        - CMD
+        - python
+        - -c
+        - |
+          import os, urllib.request
+          host = os.environ["ALLOWED_HOSTS"].split(",")[0]
+          req = urllib.request.Request("http://127.0.0.1:8000/accounts/login/",
+              headers={"Host": host, "X-Forwarded-Proto": "https"})
+          urllib.request.urlopen(req, timeout=5)
+      interval: 30s
+      timeout: 10s
+      start_period: 30s
+      retries: 3
+
+  db:
+    image: postgres:18
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: countingcarbon
+      POSTGRES_USER: countingcarbon
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set in .env}
+    volumes:
+      # Postgres 18 images keep data under /var/lib/postgresql/<major>/docker
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U countingcarbon -d countingcarbon"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:
